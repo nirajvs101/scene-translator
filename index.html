@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scene Translator</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Scene Translator</h1>
+      <p class="tagline">Translate each line of the conversation, then check how close you got.</p>
+    </header>
+
+    <main>
+      <section class="scene-info">
+        <h2 id="scene-title"></h2>
+        <p id="scene-description"></p>
+        <div class="direction" role="group" aria-label="Translation direction">
+          <button type="button" data-direction="es-en" class="active">Spanish → English</button>
+          <button type="button" data-direction="en-es">English → Spanish</button>
+        </div>
+        <ul id="speaker-legend" class="legend"></ul>
+      </section>
+
+      <ol id="dialogue" class="dialogue"></ol>
+
+      <div class="actions">
+        <button type="button" id="check-button" class="primary">Check my translations</button>
+        <button type="button" id="reset-button">Clear answers</button>
+      </div>
+      <p id="summary" class="summary" aria-live="polite"></p>
+    </main>
+
+    <script src="scene.js"></script>
+    <script src="scoring.js"></script>
+    <script src="punctuation.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
