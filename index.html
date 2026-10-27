@@ -16,9 +16,16 @@
       <section class="scene-info">
         <h2 id="scene-title"></h2>
         <p id="scene-description"></p>
-        <div class="direction" role="group" aria-label="Translation direction">
-          <button type="button" data-direction="es-en" class="active">Spanish → English</button>
-          <button type="button" data-direction="en-es">English → Spanish</button>
+        <div class="direction">
+          <label>
+            From
+            <select id="from-language"></select>
+          </label>
+          <button type="button" id="swap-button" aria-label="Swap languages" title="Swap languages">⇄</button>
+          <label>
+            To
+            <select id="to-language"></select>
+          </label>
         </div>
         <ul id="speaker-legend" class="legend"></ul>
       </section>

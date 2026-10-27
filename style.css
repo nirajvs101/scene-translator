@@ -57,8 +57,29 @@ h1 {
 .direction {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-end;
   gap: 8px;
   margin-top: 16px;
+}
+
+.direction label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.direction select {
+  margin-top: 4px;
+  min-width: 140px;
+  font: inherit;
+  font-weight: 400;
+  color: var(--text);
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
 }
 
 button {
@@ -127,6 +148,15 @@ button.primary {
 .original {
   margin: 2px 0 10px;
   font-size: 1.1rem;
+}
+
+.original p {
+  margin: 0;
+}
+
+.original .romanized {
+  font-size: 0.95rem;
+  color: var(--muted);
 }
 
 textarea {

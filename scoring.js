@@ -1,13 +1,15 @@
 // Scores a translation by how many words it shares with a reference.
 // Accents, capitalization, and punctuation are ignored so small typing slips
-// don't sink the score.
+// don't sink the score. Works for any script, including Devanagari.
 
 function normalizeText(text) {
   return text
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "") // strip accent marks
+    .replace(/[̀-ͯ]/g, "") // strip Latin accent marks (é → e, ñ → n, ü → u)
     .toLowerCase()
-    .replace(/[^a-z0-9ñ'\s]/g, " ")
+    // Keep letters, their vowel signs (needed for Devanagari), and digits;
+    // everything else, including apostrophes and ।, separates words.
+    .replace(/[^\p{L}\p{M}\p{N}\s]/gu, " ")
     .split(/\s+/)
     .filter((word) => word.length > 0);
 }

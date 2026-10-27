@@ -1,20 +1,35 @@
 // Draws the scene and handles checking translations.
 
-const LANGUAGE_NAMES = { es: "Spanish", en: "English" };
-const SPEECH_LOCALES = { es: "es-ES", en: "en-US" };
 // Chrome and Safari still expose speech recognition under a "webkit" prefix.
 const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 let activeRecognition = null;
 
-let direction = "es-en";
-// Separate answers per direction so switching doesn't erase what was typed.
-const answers = { "es-en": [], "en-es": [] };
+let fromLanguage = "es";
+let toLanguage = "en";
+// Separate answers per language pair so switching doesn't erase what was typed.
+const answersByPair = {};
 let showResults = false;
 
-function directionLanguages() {
-  const [source, target] = direction.split("-");
-  return { source, target };
+function currentAnswers() {
+  const pair = `${fromLanguage}-${toLanguage}`;
+  answersByPair[pair] = answersByPair[pair] || [];
+  return answersByPair[pair];
+}
+
+function languageName(language) {
+  return LANGUAGES[language].name;
+}
+
+// The line's main text, plus its romanized form for languages that have one.
+function lineText(line, language) {
+  const altScript = LANGUAGES[language].altScript;
+  return { main: line.text[language][0], alt: altScript ? line.text[altScript][0] : null };
+}
+
+function referenceText(line, language) {
+  const { main, alt } = lineText(line, language);
+  return alt ? `${main} (${alt})` : main;
 }
 
 function renderLegend() {
@@ -28,22 +43,23 @@ function renderLegend() {
   }
 }
 
-function renderResult(container, line, attempt, target) {
+function renderResult(container, line, attempt) {
   container.innerHTML = "";
+  const reference = referenceText(line, toLanguage);
   if (attempt.trim() === "") {
     container.className = "result skipped";
-    container.textContent = `Not answered. Reference: ${line[target][0]}`;
+    container.textContent = `Not answered. Reference: ${reference}`;
     return;
   }
-  const score = scoreTranslation(attempt, line[target]);
+  const score = scoreTranslation(attempt, acceptedAnswers(line, toLanguage));
   const percent = Math.round(score * 100);
   container.className = `result ${scoreLabel(score)}`;
 
   const scoreText = document.createElement("strong");
   scoreText.textContent = `${percent}% match`;
-  const reference = document.createElement("span");
-  reference.textContent = ` · Reference: ${line[target][0]}`;
-  container.append(scoreText, reference);
+  const referenceSpan = document.createElement("span");
+  referenceSpan.textContent = ` · Reference: ${reference}`;
+  container.append(scoreText, referenceSpan);
 }
 
 const SPEECH_ERROR_MESSAGES = {
@@ -51,6 +67,7 @@ const SPEECH_ERROR_MESSAGES = {
   "service-not-allowed": "Microphone access is blocked. Allow it in your browser's site settings, then try again.",
   "no-speech": "Didn't hear anything. Click 🎤 and try again.",
   "audio-capture": "No microphone found. Check that one is connected.",
+  "language-not-supported": "Your browser can't recognize speech in this language. Try typing instead.",
   network: "Speech recognition needs an internet connection.",
 };
 
@@ -68,9 +85,9 @@ function startListening(input, micButton, status, onTextChange) {
     status.textContent = "Speaking isn't supported in this browser. Try Chrome or Safari.";
     return;
   }
-  const { target } = directionLanguages();
+  const language = toLanguage;
   const recognition = new SpeechRecognitionClass();
-  recognition.lang = SPEECH_LOCALES[target];
+  recognition.lang = LANGUAGES[language].speechLocale;
   recognition.interimResults = true;
 
   const existingText = input.value.trim();
@@ -78,7 +95,7 @@ function startListening(input, micButton, status, onTextChange) {
     const transcript = Array.from(event.results, (result) => result[0].transcript).join("");
     const isFinished = event.results[event.results.length - 1].isFinal;
     // Punctuate only the finished sentence, so the text doesn't flicker while speaking.
-    const spoken = isFinished ? punctuateSpeech(transcript, target) : transcript;
+    const spoken = isFinished ? punctuateSpeech(transcript, language) : transcript;
     input.value = existingText ? `${existingText} ${spoken}` : spoken;
     onTextChange();
   };
@@ -106,9 +123,27 @@ function startListening(input, micButton, status, onTextChange) {
   recognition.start();
 }
 
+function renderOriginal(line) {
+  const { main, alt } = lineText(line, fromLanguage);
+  const original = document.createElement("div");
+  original.className = "original";
+  const mainText = document.createElement("p");
+  mainText.lang = fromLanguage;
+  mainText.textContent = main;
+  original.appendChild(mainText);
+  if (alt) {
+    const romanized = document.createElement("p");
+    romanized.className = "romanized";
+    romanized.textContent = alt;
+    original.appendChild(romanized);
+  }
+  return original;
+}
+
 function renderDialogue() {
   stopListening();
-  const { source, target } = directionLanguages();
+  const targetName = languageName(toLanguage);
+  const answers = currentAnswers();
   const list = document.getElementById("dialogue");
   list.innerHTML = "";
 
@@ -122,24 +157,19 @@ function renderDialogue() {
     name.className = "speaker-name";
     name.textContent = speaker.name;
 
-    const original = document.createElement("p");
-    original.className = "original";
-    original.lang = source;
-    original.textContent = line[source][0];
-
     const input = document.createElement("textarea");
     input.rows = 2;
-    input.lang = target;
-    input.placeholder = `${speaker.name}'s line in ${LANGUAGE_NAMES[target]}…`;
-    input.setAttribute("aria-label", `Your ${LANGUAGE_NAMES[target]} translation of ${speaker.name}, line ${index + 1}`);
-    input.value = answers[direction][index] || "";
+    input.lang = toLanguage;
+    input.placeholder = `${speaker.name}'s line in ${targetName}…`;
+    input.setAttribute("aria-label", `Your ${targetName} translation of ${speaker.name}, line ${index + 1}`);
+    input.value = answers[index] || "";
 
     const result = document.createElement("div");
     result.className = "result";
     result.setAttribute("aria-live", "polite");
 
     const saveAnswer = () => {
-      answers[direction][index] = input.value;
+      answers[index] = input.value;
       result.className = "result";
       result.innerHTML = "";
     };
@@ -150,8 +180,8 @@ function renderDialogue() {
     micButton.className = "mic";
     micButton.textContent = "🎤";
     micButton.setAttribute("aria-pressed", "false");
-    micButton.setAttribute("aria-label", `Speak ${speaker.name}'s line in ${LANGUAGE_NAMES[target]}`);
-    micButton.title = `Speak your translation in ${LANGUAGE_NAMES[target]}`;
+    micButton.setAttribute("aria-label", `Speak ${speaker.name}'s line in ${targetName}`);
+    micButton.title = `Speak your translation in ${targetName}`;
 
     const micStatus = document.createElement("div");
     micStatus.className = "mic-status";
@@ -171,55 +201,70 @@ function renderDialogue() {
     answerRow.append(input, micButton);
 
     if (showResults) {
-      renderResult(result, line, input.value, target);
+      renderResult(result, line, input.value);
     }
 
-    item.append(name, original, answerRow, micStatus, result);
+    item.append(name, renderOriginal(line), answerRow, micStatus, result);
     list.appendChild(item);
   });
 }
 
 function checkAll() {
-  const { target } = directionLanguages();
   showResults = true;
   renderDialogue();
 
+  const answers = currentAnswers();
   const attempted = SCENE.lines
-    .map((line, index) => ({ line, attempt: answers[direction][index] || "" }))
+    .map((line, index) => ({ line, attempt: answers[index] || "" }))
     .filter(({ attempt }) => attempt.trim() !== "");
   const summary = document.getElementById("summary");
   if (attempted.length === 0) {
     summary.textContent = "Type a translation in at least one box, then check again.";
     return;
   }
-  const total = attempted.reduce((sum, { line, attempt }) => sum + scoreTranslation(attempt, line[target]), 0);
+  const total = attempted.reduce(
+    (sum, { line, attempt }) => sum + scoreTranslation(attempt, acceptedAnswers(line, toLanguage)),
+    0,
+  );
   const average = Math.round((total / attempted.length) * 100);
   summary.textContent = `Average match: ${average}% across ${attempted.length} of ${SCENE.lines.length} lines.`;
 }
 
-function setDirection(newDirection) {
-  direction = newDirection;
+const fromSelect = document.getElementById("from-language");
+const toSelect = document.getElementById("to-language");
+
+// Picking the same language on both sides swaps them instead.
+function setLanguages(newFrom, newTo) {
+  if (newFrom === newTo) {
+    [newFrom, newTo] = [toLanguage, fromLanguage];
+  }
+  fromLanguage = newFrom;
+  toLanguage = newTo;
+  fromSelect.value = fromLanguage;
+  toSelect.value = toLanguage;
   showResults = false;
   document.getElementById("summary").textContent = "";
-  for (const button of document.querySelectorAll(".direction button")) {
-    button.classList.toggle("active", button.dataset.direction === direction);
-  }
+  document.getElementById("scene-title").textContent = SCENE.title[fromLanguage];
   renderDialogue();
 }
 
 function clearAnswers() {
-  answers[direction] = [];
+  answersByPair[`${fromLanguage}-${toLanguage}`] = [];
   showResults = false;
   document.getElementById("summary").textContent = "";
   renderDialogue();
 }
 
-document.getElementById("scene-title").textContent = SCENE.title;
-document.getElementById("scene-description").textContent = SCENE.description;
-for (const button of document.querySelectorAll(".direction button")) {
-  button.addEventListener("click", () => setDirection(button.dataset.direction));
+for (const select of [fromSelect, toSelect]) {
+  for (const [code, language] of Object.entries(LANGUAGES)) {
+    select.add(new Option(language.name, code));
+  }
 }
+fromSelect.addEventListener("change", () => setLanguages(fromSelect.value, toLanguage));
+toSelect.addEventListener("change", () => setLanguages(fromLanguage, toSelect.value));
+document.getElementById("swap-button").addEventListener("click", () => setLanguages(toLanguage, fromLanguage));
 document.getElementById("check-button").addEventListener("click", checkAll);
 document.getElementById("reset-button").addEventListener("click", clearAnswers);
+document.getElementById("scene-description").textContent = SCENE.description;
 renderLegend();
-renderDialogue();
+setLanguages(fromLanguage, toLanguage);
