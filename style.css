@@ -161,6 +161,24 @@ button:hover {
   border-color: var(--accent);
 }
 
+.scene-choice {
+  margin-bottom: 16px;
+}
+
+.scene-picker-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.scene-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scene-picker button[aria-pressed="true"],
 button.active,
 button.primary {
   background: var(--accent);

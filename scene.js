@@ -32,9 +32,10 @@ const LANGUAGES = {
   he: { name: "Hebrew", nativeName: "עברית", speechLocale: "he-IL", altScript: "heLatn" },
 };
 
-// A short built-in scene. Each line lists one or more acceptable translations
+// The café scene. Each line lists one or more acceptable translations
 // per language; the first is the one shown.
-const SCENE = {
+const CAFE_SCENE = {
+  id: "cafe",
   title: {
     en: "At the café",
     es: "En el café",

@@ -5,16 +5,23 @@ const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRe
 
 let activeRecognition = null;
 
+const SCENES = [CAFE_SCENE, DOCTOR_SCENE];
+
+let scene = SCENES[0];
 let fromLanguage = "es";
 let toLanguage = "en";
-// Separate answers per language pair so switching doesn't erase what was typed.
+// Separate answers per scene and language pair so switching doesn't erase what was typed.
 const answersByPair = {};
 let showResults = false;
 
+function answersKey() {
+  return `${scene.id}:${fromLanguage}-${toLanguage}`;
+}
+
 function currentAnswers() {
-  const pair = `${fromLanguage}-${toLanguage}`;
-  answersByPair[pair] = answersByPair[pair] || [];
-  return answersByPair[pair];
+  const key = answersKey();
+  answersByPair[key] = answersByPair[key] || [];
+  return answersByPair[key];
 }
 
 function languageName(language) {
@@ -35,7 +42,7 @@ function referenceText(line, language) {
 function renderLegend() {
   const legend = document.getElementById("speaker-legend");
   legend.innerHTML = "";
-  for (const speaker of Object.values(SCENE.speakers)) {
+  for (const speaker of Object.values(scene.speakers)) {
     const item = document.createElement("li");
     item.textContent = speaker.name;
     item.style.setProperty("--speaker-color", speaker.color);
@@ -165,8 +172,8 @@ function renderDialogue() {
   const list = document.getElementById("dialogue");
   list.innerHTML = "";
 
-  SCENE.lines.forEach((line, index) => {
-    const speaker = SCENE.speakers[line.speaker];
+  scene.lines.forEach((line, index) => {
+    const speaker = scene.speakers[line.speaker];
     const item = document.createElement("li");
     item.className = "line";
     item.style.setProperty("--speaker-color", speaker.color);
@@ -233,7 +240,7 @@ function checkAll() {
   renderDialogue();
 
   const answers = currentAnswers();
-  const attempted = SCENE.lines
+  const attempted = scene.lines
     .map((line, index) => ({ line, attempt: answers[index] || "" }))
     .filter(({ attempt }) => attempt.trim() !== "");
   const summary = document.getElementById("summary");
@@ -246,7 +253,7 @@ function checkAll() {
     0,
   );
   const average = Math.round((total / attempted.length) * 100);
-  summary.textContent = `Average match: ${average}% across ${attempted.length} of ${SCENE.lines.length} lines.`;
+  summary.textContent = `Average match: ${average}% across ${attempted.length} of ${scene.lines.length} lines.`;
 }
 
 const fromPicker = createLanguagePicker(document.getElementById("from-picker"), "From", (code) =>
@@ -265,14 +272,40 @@ function setLanguages(newFrom, newTo) {
   toLanguage = newTo;
   fromPicker.setValue(fromLanguage);
   toPicker.setValue(toLanguage);
+  showScene();
+}
+
+// Draws the current scene from scratch, with results hidden until the next check.
+function showScene() {
   showResults = false;
   document.getElementById("summary").textContent = "";
-  document.getElementById("scene-title").textContent = SCENE.title[fromLanguage];
+  document.getElementById("scene-title").textContent = scene.title[fromLanguage];
+  document.getElementById("scene-description").textContent = scene.description;
+  for (const button of document.querySelectorAll("#scene-picker button")) {
+    button.setAttribute("aria-pressed", String(button.dataset.sceneId === scene.id));
+  }
+  renderLegend();
   renderDialogue();
 }
 
+function renderScenePicker() {
+  const picker = document.getElementById("scene-picker");
+  for (const option of SCENES) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.sceneId = option.id;
+    button.textContent = option.title.en;
+    button.title = option.description;
+    button.addEventListener("click", () => {
+      scene = option;
+      showScene();
+    });
+    picker.appendChild(button);
+  }
+}
+
 function clearAnswers() {
-  answersByPair[`${fromLanguage}-${toLanguage}`] = [];
+  answersByPair[answersKey()] = [];
   showResults = false;
   document.getElementById("summary").textContent = "";
   renderDialogue();
@@ -281,6 +314,5 @@ function clearAnswers() {
 document.getElementById("swap-button").addEventListener("click", () => setLanguages(toLanguage, fromLanguage));
 document.getElementById("check-button").addEventListener("click", checkAll);
 document.getElementById("reset-button").addEventListener("click", clearAnswers);
-document.getElementById("scene-description").textContent = SCENE.description;
-renderLegend();
+renderScenePicker();
 setLanguages(fromLanguage, toLanguage);
