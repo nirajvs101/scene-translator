@@ -51,7 +51,7 @@ function renderResult(container, line, attempt) {
     container.textContent = `Not answered. Reference: ${reference}`;
     return;
   }
-  const score = scoreTranslation(attempt, acceptedAnswers(line, toLanguage));
+  const score = scoreLine(attempt, line, toLanguage);
   const percent = Math.round(score * 100);
   container.className = `result ${scoreLabel(score)}`;
 
@@ -78,8 +78,12 @@ function stopListening() {
   }
 }
 
-// Listens for one spoken answer and writes it into the box, after any text
-// already typed there.
+const LISTENING_MESSAGE = "Listening… click 🎤 when you're done";
+// Learners pause to think mid-sentence, so only stop after a long silence.
+const SILENCE_BEFORE_STOP_MS = 4000;
+
+// Listens until the speaker clicks 🎤 again or goes quiet, and writes the
+// answer into the box, after any text already typed there.
 function startListening(input, micButton, status, onTextChange) {
   if (!SpeechRecognitionClass) {
     status.textContent = "Speaking isn't supported in this browser. Try Chrome or Safari.";
@@ -88,16 +92,24 @@ function startListening(input, micButton, status, onTextChange) {
   const language = toLanguage;
   const recognition = new SpeechRecognitionClass();
   recognition.lang = LANGUAGES[language].speechLocale;
+  recognition.continuous = true;
   recognition.interimResults = true;
 
   const existingText = input.value.trim();
-  recognition.onresult = (event) => {
-    const transcript = Array.from(event.results, (result) => result[0].transcript).join("");
-    const isFinished = event.results[event.results.length - 1].isFinal;
-    // Punctuate only the finished sentence, so the text doesn't flicker while speaking.
-    const spoken = isFinished ? punctuateSpeech(transcript, language) : transcript;
-    input.value = existingText ? `${existingText} ${spoken}` : spoken;
+  let transcript = "";
+  let silenceTimer = null;
+  const showAnswer = (spoken) => {
+    input.value = existingText && spoken ? `${existingText} ${spoken}` : existingText || spoken;
     onTextChange();
+  };
+
+  recognition.onresult = (event) => {
+    transcript = Array.from(event.results, (result) => result[0].transcript.trim())
+      .filter((part) => part !== "")
+      .join(" ");
+    showAnswer(transcript);
+    clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(() => recognition.stop(), SILENCE_BEFORE_STOP_MS);
   };
   recognition.onerror = (event) => {
     if (event.error !== "aborted") {
@@ -105,9 +117,14 @@ function startListening(input, micButton, status, onTextChange) {
     }
   };
   recognition.onend = () => {
+    clearTimeout(silenceTimer);
+    // Punctuate once, after the whole answer, rather than at every pause.
+    if (transcript !== "") {
+      showAnswer(punctuateSpeech(transcript, language));
+    }
     micButton.classList.remove("listening");
     micButton.setAttribute("aria-pressed", "false");
-    if (status.textContent === "Listening…") {
+    if (status.textContent === LISTENING_MESSAGE) {
       status.textContent = "";
     }
     if (activeRecognition === recognition) {
@@ -119,7 +136,7 @@ function startListening(input, micButton, status, onTextChange) {
   activeRecognition = recognition;
   micButton.classList.add("listening");
   micButton.setAttribute("aria-pressed", "true");
-  status.textContent = "Listening…";
+  status.textContent = LISTENING_MESSAGE;
   recognition.start();
 }
 
@@ -129,6 +146,7 @@ function renderOriginal(line) {
   original.className = "original";
   const mainText = document.createElement("p");
   mainText.lang = fromLanguage;
+  mainText.dir = "auto";
   mainText.textContent = main;
   original.appendChild(mainText);
   if (alt) {
@@ -160,6 +178,7 @@ function renderDialogue() {
     const input = document.createElement("textarea");
     input.rows = 2;
     input.lang = toLanguage;
+    input.dir = "auto";
     input.placeholder = `${speaker.name}'s line in ${targetName}…`;
     input.setAttribute("aria-label", `Your ${targetName} translation of ${speaker.name}, line ${index + 1}`);
     input.value = answers[index] || "";
@@ -223,15 +242,19 @@ function checkAll() {
     return;
   }
   const total = attempted.reduce(
-    (sum, { line, attempt }) => sum + scoreTranslation(attempt, acceptedAnswers(line, toLanguage)),
+    (sum, { line, attempt }) => sum + scoreLine(attempt, line, toLanguage),
     0,
   );
   const average = Math.round((total / attempted.length) * 100);
   summary.textContent = `Average match: ${average}% across ${attempted.length} of ${SCENE.lines.length} lines.`;
 }
 
-const fromSelect = document.getElementById("from-language");
-const toSelect = document.getElementById("to-language");
+const fromPicker = createLanguagePicker(document.getElementById("from-picker"), "From", (code) =>
+  setLanguages(code, toLanguage),
+);
+const toPicker = createLanguagePicker(document.getElementById("to-picker"), "To", (code) =>
+  setLanguages(fromLanguage, code),
+);
 
 // Picking the same language on both sides swaps them instead.
 function setLanguages(newFrom, newTo) {
@@ -240,8 +263,8 @@ function setLanguages(newFrom, newTo) {
   }
   fromLanguage = newFrom;
   toLanguage = newTo;
-  fromSelect.value = fromLanguage;
-  toSelect.value = toLanguage;
+  fromPicker.setValue(fromLanguage);
+  toPicker.setValue(toLanguage);
   showResults = false;
   document.getElementById("summary").textContent = "";
   document.getElementById("scene-title").textContent = SCENE.title[fromLanguage];
@@ -255,13 +278,6 @@ function clearAnswers() {
   renderDialogue();
 }
 
-for (const select of [fromSelect, toSelect]) {
-  for (const [code, language] of Object.entries(LANGUAGES)) {
-    select.add(new Option(language.name, code));
-  }
-}
-fromSelect.addEventListener("change", () => setLanguages(fromSelect.value, toLanguage));
-toSelect.addEventListener("change", () => setLanguages(fromLanguage, toSelect.value));
 document.getElementById("swap-button").addEventListener("click", () => setLanguages(toLanguage, fromLanguage));
 document.getElementById("check-button").addEventListener("click", checkAll);
 document.getElementById("reset-button").addEventListener("click", clearAnswers);

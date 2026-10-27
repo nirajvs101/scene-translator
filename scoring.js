@@ -2,23 +2,28 @@
 // Accents, capitalization, and punctuation are ignored so small typing slips
 // don't sink the score. Works for any script, including Devanagari.
 
-function normalizeText(text) {
-  return text
+// `byCharacter` is for languages written without spaces (Chinese, Japanese):
+// each character counts as one "word".
+function normalizeText(text, byCharacter = false) {
+  const words = text
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "") // strip Latin accent marks (é → e, ñ → n, ü → u)
+    .replace(/[\u0300-\u036f]/g, "") // strip Latin and Greek accent marks (é → e, ñ → n, ά → α)
+    .replace(/[\u064b-\u0655]/g, "") // strip optional Arabic vowel and hamza marks (أ → ا)
+    .replace(/\u200c/g, "") // join Persian half-spaced words (می‌خوام → میخوام)
     .toLowerCase()
     // Keep letters, their vowel signs (needed for Devanagari), and digits;
     // everything else, including apostrophes and ।, separates words.
     .replace(/[^\p{L}\p{M}\p{N}\s]/gu, " ")
     .split(/\s+/)
     .filter((word) => word.length > 0);
+  return byCharacter ? words.flatMap((word) => Array.from(word)) : words;
 }
 
 // Word-overlap F1: balances "did you include the right words" (recall)
 // against "did you add extra wrong words" (precision). Returns 0–1.
-function overlapScore(attempt, reference) {
-  const attemptWords = normalizeText(attempt);
-  const referenceWords = normalizeText(reference);
+function overlapScore(attempt, reference, byCharacter = false) {
+  const attemptWords = normalizeText(attempt, byCharacter);
+  const referenceWords = normalizeText(reference, byCharacter);
   if (attemptWords.length === 0 || referenceWords.length === 0) {
     return 0;
   }
@@ -40,8 +45,8 @@ function overlapScore(attempt, reference) {
 }
 
 // Scores against every acceptable reference and keeps the best match.
-function scoreTranslation(attempt, references) {
-  return Math.max(...references.map((reference) => overlapScore(attempt, reference)));
+function scoreTranslation(attempt, references, byCharacter = false) {
+  return Math.max(...references.map((reference) => overlapScore(attempt, reference, byCharacter)));
 }
 
 function scoreLabel(score) {

@@ -34,7 +34,8 @@ const QUESTION_WORDS = {
 // position counts there; other languages usually lead with it.
 const QUESTION_WORD_ANYWHERE = new Set(["hi"]);
 
-const SENTENCE_END = { hi: "।" };
+// Languages without question words above always get a statement ending.
+const SENTENCE_END = { hi: "।", bn: "।", ur: "۔", zh: "。", ja: "。" };
 
 function looksLikeQuestion(text, language) {
   const lower = text.toLowerCase();
@@ -52,7 +53,7 @@ function punctuateSpeech(text, language) {
     return "";
   }
   const capitalized = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-  if (/[.!?।]$/.test(trimmed)) {
+  if (/[.!?।۔。？！؟;]$/.test(trimmed)) {
     return capitalized;
   }
   if (!looksLikeQuestion(trimmed, language)) {
