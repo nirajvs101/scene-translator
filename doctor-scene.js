@@ -29,8 +29,10 @@ const DOCTOR_SCENE = {
     el: "Στον γιατρό",
     sv: "Hos läkaren",
     he: "אצל הרופא",
+    ml: "ഡോക്ടറുടെ അടുത്ത്",
   },
   description: "Sofía hurt her ankle and sees a doctor. Practices past and future tenses, commands, and \"if\" sentences.",
+  keywords: ["formal", "polite", "health", "medical", "appointment", "grammar"],
   speakers: {
     receptionist: { name: "Receptionist", color: "#2f9e44" },
     sofia: { name: "Sofía", color: "#d9480f" },
@@ -77,6 +79,8 @@ const DOCTOR_SCENE = {
         sv: ["God eftermiddag. Har du en tid bokad?"],
         he: ["צהריים טובים. יש לך תור?"],
         heLatn: ["Tsohorayim tovim. Yesh lakh tor?"],
+        ml: ["നമസ്കാരം. നിങ്ങൾക്ക് അപ്പോയിന്റ്മെന്റ് ഉണ്ടോ?"],
+        mlLatn: ["Namaskaram. Ningalkku appointment undo?", "Namaskaram. Ningalk appointment undo?"],
       },
     },
     {
@@ -119,6 +123,8 @@ const DOCTOR_SCENE = {
         sv: ["Ja, jag ringde i går och fick en tid klockan fyra."],
         he: ["כן, התקשרתי אתמול ונתנו לי תור לארבע."],
         heLatn: ["Ken, hitkasharti etmol ve-natnu li tor le-arba."],
+        ml: ["ഉണ്ട്, ഞാൻ ഇന്നലെ വിളിച്ചിരുന്നു, അവർ നാല് മണിക്ക് തന്നു."],
+        mlLatn: ["Undu, njan innale vilichirunnu, avar naalu manikku thannu.", "Und, njan innale vilichirunnu, avar naalu manik thannu."],
       },
     },
     {
@@ -161,6 +167,8 @@ const DOCTOR_SCENE = {
         sv: ["Varsågod och sätt dig. Läkaren tar emot dig om några minuter."],
         he: ["שבי בבקשה. הרופא יקבל אותך בעוד כמה דקות."],
         heLatn: ["Shvi bevakasha. Ha-rofe yekabel otakh be-od kama dakot."],
+        ml: ["ദയവായി ഇരിക്കൂ. കുറച്ച് മിനിറ്റിനുള്ളിൽ ഡോക്ടർ നിങ്ങളെ കാണും."],
+        mlLatn: ["Dayavayi irikkoo. Kurachu minuttinullil doctor ningale kaanum.", "Dayavayi irikku. Kurach minuttinullil doctor ningale kaanum."],
       },
     },
     {
@@ -203,6 +211,8 @@ const DOCTOR_SCENE = {
         sv: ["Hej, Sofía. Vad har hänt?"],
         he: ["שלום, סופיה. מה קרה לך?"],
         heLatn: ["Shalom, Sofia. Ma kara lakh?"],
+        ml: ["നമസ്കാരം, സോഫിയ. എന്തുപറ്റി?"],
+        mlLatn: ["Namaskaram, Sofia. Enthu patti?", "Namaskaram, Sofia. Enthupatti?"],
       },
     },
     {
@@ -245,6 +255,8 @@ const DOCTOR_SCENE = {
         sv: ["Jag ramlade när jag sprang i parken i lördags."],
         he: ["נפלתי כשרצתי בפארק בשבת."],
         heLatn: ["Nafalti kshe-ratsti ba-park be-Shabat."],
+        ml: ["ശനിയാഴ്ച പാർക്കിൽ ഓടുമ്പോൾ ഞാൻ വീണു."],
+        mlLatn: ["Shaniyazhcha parkil odumbol njan veenu.", "Shaniyaazhcha parkil odumpol njan veenu."],
       },
     },
     {
@@ -287,6 +299,8 @@ const DOCTOR_SCENE = {
         sv: ["Gör det ont i fotleden när du går?"],
         he: ["כואב לך הקרסול כשאת הולכת?"],
         heLatn: ["Ko'ev lakh ha-karsol kshe-at holekhet?"],
+        ml: ["നടക്കുമ്പോൾ നിങ്ങളുടെ കണങ്കാലിന് വേദനയുണ്ടോ?"],
+        mlLatn: ["Nadakkumbol ningalude kanankaalinu vedanayundo?", "Nadakkumpol ningalude kanankalinu vedanayundo?"],
       },
     },
     {
@@ -329,6 +343,8 @@ const DOCTOR_SCENE = {
         sv: ["Ja, och sedan dess har jag inte kunnat sova ordentligt."],
         he: ["כן, ומאז לא הצלחתי לישון טוב."],
         heLatn: ["Ken, u-me'az lo hitslakhti lishon tov."],
+        ml: ["ഉണ്ട്, അതിനുശേഷം എനിക്ക് നന്നായി ഉറങ്ങാൻ പറ്റിയിട്ടില്ല."],
+        mlLatn: ["Undu, athinushesham enikku nannayi urangan pattiyittilla.", "Und, athinu shesham enik nannayi urangan pattiyittilla."],
       },
     },
     {
@@ -371,6 +387,8 @@ const DOCTOR_SCENE = {
         sv: ["Den är inte bruten, men du borde vila i en vecka."],
         he: ["הוא לא שבור, אבל כדאי שתנוחי שבוע."],
         heLatn: ["Hu lo shavur, aval keday she-tanukhi shavua."],
+        ml: ["എല്ല് ഒടിഞ്ഞിട്ടില്ല, പക്ഷേ ഒരാഴ്ച വിശ്രമിക്കണം."],
+        mlLatn: ["Ellu odinjittilla, pakshe oraazhcha vishramikkanam.", "Ell odinjittilla, pakshe orazhcha vishramikkanam."],
       },
     },
     {
@@ -413,6 +431,8 @@ const DOCTOR_SCENE = {
         sv: ["Om jag vilar, kan jag spela fotboll nästa månad?"],
         he: ["אם אנוח, אוכל לשחק כדורגל בחודש הבא?"],
         heLatn: ["Im anuakh, ukhal le-sakhek kaduregel ba-khodesh ha-ba?"],
+        ml: ["വിശ്രമിച്ചാൽ അടുത്ത മാസം എനിക്ക് ഫുട്ബോൾ കളിക്കാൻ പറ്റുമോ?"],
+        mlLatn: ["Vishramichal adutha maasam enikku football kalikkan pattumo?", "Vishramichaal adutha masam enik football kalikkan pattumo?"],
       },
     },
     {
@@ -455,6 +475,8 @@ const DOCTOR_SCENE = {
         sv: ["Det hoppas jag. Lägg is på den och kom tillbaka om det inte blir bättre."],
         he: ["אני מקווה. שימי קרח ותחזרי אם זה לא משתפר."],
         heLatn: ["Ani mekave. Simi kerakh ve-takhzeri im ze lo mishtaper."],
+        ml: ["അങ്ങനെ പ്രതീക്ഷിക്കുന്നു. ഐസ് വെക്കൂ, ഭേദമായില്ലെങ്കിൽ വീണ്ടും വരൂ."],
+        mlLatn: ["Angane pratheekshikkunnu. Ice vekku, bhedamayillenkil veendum varu.", "Angane pratheekshikkunnu. Ice vekkoo, bhedamayillenkil veendum varoo."],
       },
     },
   ],

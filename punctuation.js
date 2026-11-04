@@ -28,17 +28,24 @@ const QUESTION_WORDS = {
     "quanto", "quanta", "quanti", "quante", "posso", "puoi", "può", "possiamo", "vuoi",
   ],
   hi: ["क्या", "कहाँ", "कहां", "कब", "क्यों", "कौन", "कैसे", "कैसा", "कैसी", "कितना", "कितने", "कितनी"],
+  ml: ["എന്ത്", "എന്താ", "എന്താണ്", "എന്തുപറ്റി", "എവിടെ", "എപ്പോൾ", "എന്തുകൊണ്ട്", "ആര്", "ആരാണ്", "എങ്ങനെ", "എത്ര", "ഏത്"],
 };
 
-// Hindi often puts the question word mid-sentence ("आप क्या लेंगे"), so any
-// position counts there; other languages usually lead with it.
-const QUESTION_WORD_ANYWHERE = new Set(["hi"]);
+// Hindi and Malayalam often put the question word mid-sentence ("आप क्या लेंगे"),
+// so any position counts there; other languages usually lead with it.
+const QUESTION_WORD_ANYWHERE = new Set(["hi", "ml"]);
+
+// Malayalam yes/no questions end in the vowel sign ോ (ഉണ്ടോ, പറ്റുമോ).
+const QUESTION_ENDING = { ml: "ോ" };
 
 // Languages without question words above always get a statement ending.
 const SENTENCE_END = { hi: "।", bn: "।", ur: "۔", zh: "。", ja: "。" };
 
 function looksLikeQuestion(text, language) {
   const lower = text.toLowerCase();
+  if (QUESTION_ENDING[language] && lower.endsWith(QUESTION_ENDING[language])) {
+    return true;
+  }
   const words = QUESTION_WORDS[language] || [];
   if (QUESTION_WORD_ANYWHERE.has(language)) {
     const spokenWords = lower.split(/\s+/);

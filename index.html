@@ -4,35 +4,130 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Scene Translator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <header>
+    <header class="top-bar">
       <h1>Scene Translator</h1>
-      <p class="tagline">Translate each line of the conversation, then check how close you got.</p>
     </header>
 
     <main>
+      <p class="tagline">Jump into a conversation, translate each line, and see how close you get.</p>
       <section class="scene-info">
-        <div class="scene-choice">
-          <span id="scene-picker-label" class="scene-picker-label">Choose a scene</span>
+        <div class="scene-choice card">
+          <span id="scene-picker-label" class="scene-picker-label">Pick a scene</span>
+          <input
+            type="search"
+            id="scene-search"
+            class="scene-search"
+            aria-label="Search scenes"
+            placeholder="Search scenes: formal, health…"
+          />
           <div id="scene-picker" class="scene-picker" role="group" aria-labelledby="scene-picker-label"></div>
+          <p id="scene-search-message" class="scene-search-message" aria-live="polite"></p>
+          <div id="remove-confirm" class="remove-confirm" hidden>
+            <p id="remove-confirm-message"></p>
+            <button type="button" id="remove-yes" class="danger">Yes, delete it</button>
+            <button type="button" id="remove-no">Keep it</button>
+          </div>
+          <button type="button" id="custom-open" class="custom-open" aria-expanded="false" aria-controls="custom-panel">
+            ＋ Make your own scene
+          </button>
+          <div id="custom-panel" class="custom-panel" hidden>
+            <label class="custom-step" for="custom-description">1. What's the conversation about?</label>
+            <textarea
+              id="custom-description"
+              rows="2"
+              maxlength="300"
+              placeholder="Calling my landlord about a broken heater"
+            ></textarea>
+            <p id="custom-languages" class="custom-hint"></p>
+            <p class="custom-step">2. Make it yours (optional)</p>
+            <fieldset class="option-group">
+              <legend>Grammar to practice (pick any)</legend>
+              <div class="option-pills">
+                <label class="option-pill"><input type="checkbox" name="scene-grammar" value="past tense" /><span>Past tense</span></label>
+                <label class="option-pill"><input type="checkbox" name="scene-grammar" value="future tense" /><span>Future tense</span></label>
+                <label class="option-pill"><input type="checkbox" name="scene-grammar" value="conditional sentences" /><span>Conditional (if I…)</span></label>
+                <label class="option-pill"><input type="checkbox" name="scene-grammar" value="commands" /><span>Commands</span></label>
+                <label class="option-pill"><input type="checkbox" name="scene-grammar" value="questions" /><span>Questions</span></label>
+                <label class="option-pill"><input type="checkbox" name="scene-grammar" value="compound sentences" /><span>Compound sentences</span></label>
+              </div>
+              <input type="text" id="custom-grammar-other" class="custom-grammar-other" maxlength="100" aria-label="Other grammar to practice" placeholder="Anything else? Subjunctive…" />
+            </fieldset>
+            <fieldset class="option-group">
+              <legend>Length</legend>
+              <div class="option-pills">
+                <label class="option-pill"><input type="radio" name="scene-length" value="6" /><span>Short (about 6 lines)</span></label>
+                <label class="option-pill"><input type="radio" name="scene-length" value="10" checked /><span>Medium (about 10)</span></label>
+                <label class="option-pill"><input type="radio" name="scene-length" value="20" /><span>Long (about 20)</span></label>
+              </div>
+            </fieldset>
+            <fieldset class="option-group">
+              <legend>Your level</legend>
+              <div class="option-pills">
+                <label class="option-pill"><input type="radio" name="scene-level" value="beginner" /><span>Beginner</span></label>
+                <label class="option-pill"><input type="radio" name="scene-level" value="intermediate" checked /><span>Intermediate</span></label>
+                <label class="option-pill"><input type="radio" name="scene-level" value="advanced" /><span>Advanced</span></label>
+              </div>
+            </fieldset>
+            <fieldset class="option-group">
+              <legend>Tone</legend>
+              <div class="option-pills">
+                <label class="option-pill"><input type="radio" name="scene-tone" value="any" checked /><span>Whatever fits</span></label>
+                <label class="option-pill"><input type="radio" name="scene-tone" value="casual" /><span>Casual</span></label>
+                <label class="option-pill"><input type="radio" name="scene-tone" value="formal" /><span>Formal</span></label>
+              </div>
+            </fieldset>
+            <fieldset class="option-group">
+              <legend>Speakers</legend>
+              <div class="option-pills">
+                <label class="option-pill"><input type="radio" name="scene-speakers" value="2" checked /><span>2</span></label>
+                <label class="option-pill"><input type="radio" name="scene-speakers" value="3" /><span>3</span></label>
+                <label class="option-pill"><input type="radio" name="scene-speakers" value="4" /><span>4</span></label>
+              </div>
+            </fieldset>
+            <p class="custom-step">3. Ask an AI to write it</p>
+            <div id="custom-ai-buttons" class="custom-ai-buttons"></div>
+            <p id="custom-ai-message" class="custom-hint" aria-live="polite"></p>
+            <textarea id="custom-prompt" rows="5" readonly aria-label="Request to copy into an AI" hidden></textarea>
+            <label class="custom-step" for="custom-reply">4. Copy the AI's whole reply and paste it here</label>
+            <textarea id="custom-reply" rows="2" placeholder="Paste here. You'll get a preview before anything is added."></textarea>
+            <p id="custom-reply-message" class="custom-error" role="alert"></p>
+            <p id="custom-cancel-message" class="custom-hint" aria-live="polite"></p>
+            <div id="custom-preview" class="custom-preview" hidden>
+              <p class="custom-step">5. Is this the scene you wanted?</p>
+              <p id="custom-preview-title" class="custom-preview-title"></p>
+              <p id="custom-preview-summary" class="custom-hint"></p>
+              <ul id="custom-preview-lines" class="custom-preview-lines"></ul>
+              <div class="custom-preview-actions">
+                <button type="button" id="custom-confirm" class="primary">Add this scene</button>
+                <button type="button" id="custom-cancel">Not this one</button>
+              </div>
+            </div>
+          </div>
         </div>
-        <h2 id="scene-title"></h2>
-        <p id="scene-description"></p>
-        <div class="direction">
-          <div id="from-picker"></div>
-          <button type="button" id="swap-button" aria-label="Swap languages" title="Swap languages">⇄</button>
-          <div id="to-picker"></div>
+        <div class="card">
+          <p id="scene-notice" class="scene-notice" aria-live="polite"></p>
+          <h2 id="scene-title"></h2>
+          <p id="scene-description"></p>
+          <div class="direction">
+            <div id="from-picker"></div>
+            <button type="button" id="swap-button" aria-label="Swap languages" title="Swap languages">⇄</button>
+            <div id="to-picker"></div>
+          </div>
+          <ul id="speaker-legend" class="legend"></ul>
         </div>
-        <ul id="speaker-legend" class="legend"></ul>
       </section>
 
       <ol id="dialogue" class="dialogue"></ol>
 
       <div class="actions">
-        <button type="button" id="check-button" class="primary">Check my translations</button>
-        <button type="button" id="reset-button">Clear answers</button>
+        <button type="button" id="check-button" class="primary">Check translations</button>
+        <button type="button" id="reset-button">Start over</button>
       </div>
       <p id="summary" class="summary" aria-live="polite"></p>
     </main>
@@ -42,6 +137,8 @@
     <script src="scoring.js"></script>
     <script src="punctuation.js"></script>
     <script src="language-picker.js"></script>
+    <script src="scene-search.js"></script>
+    <script src="custom-scene.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

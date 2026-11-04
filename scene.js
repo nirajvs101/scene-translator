@@ -1,7 +1,8 @@
-// Languages the app supports: 25 of the most spoken and most studied.
+// Languages the app supports: 25 of the most spoken and most studied, plus Malayalam.
 // `nativeName` lets people search for a language the way they'd write it.
 // `altScript` names an extra set of accepted answers in a romanized form
 // (pinyin, romaji, Roman Urdu…), used for scoring and shown under the main text.
+// `romanizedName` is what people call that form, so they can search for it.
 // `byCharacter` marks languages written without spaces between words, so
 // scoring compares characters instead of words.
 const LANGUAGES = {
@@ -26,6 +27,7 @@ const LANGUAGES = {
   pl: { name: "Polish", nativeName: "Polski", speechLocale: "pl-PL" },
   sw: { name: "Swahili", nativeName: "Kiswahili", speechLocale: "sw-KE" },
   ta: { name: "Tamil", nativeName: "தமிழ்", speechLocale: "ta-IN", altScript: "taLatn" },
+  ml: { name: "Malayalam", nativeName: "മലയാളം", speechLocale: "ml-IN", altScript: "mlLatn", romanizedName: "Manglish" },
   fa: { name: "Persian", nativeName: "فارسی", speechLocale: "fa-IR", altScript: "faLatn" },
   el: { name: "Greek", nativeName: "Ελληνικά", speechLocale: "el-GR", altScript: "elLatn" },
   sv: { name: "Swedish", nativeName: "Svenska", speechLocale: "sv-SE" },
@@ -62,8 +64,10 @@ const CAFE_SCENE = {
     el: "Στο καφέ",
     sv: "På kaféet",
     he: "בבית הקפה",
+    ml: "കഫേയിൽ",
   },
   description: "Two friends order coffee and make weekend plans.",
+  keywords: ["informal", "casual", "food", "drink", "restaurant", "ordering", "friends"],
   speakers: {
     lucia: { name: "Lucía", color: "#d9480f" },
     mateo: { name: "Mateo", color: "#1971c2" },
@@ -110,6 +114,8 @@ const CAFE_SCENE = {
         sv: ["God morgon. Vad får det lov att vara?", "God morgon. Vad vill ni ha?"],
         he: ["בוקר טוב. מה להביא לכם?", "בוקר טוב. מה תרצו?"],
         heLatn: ["Boker tov. Ma lehavi lakhem?"],
+        ml: ["സുപ്രഭാതം. നിങ്ങൾക്ക് എന്താണ് വേണ്ടത്?", "നമസ്കാരം. നിങ്ങൾക്ക് എന്ത് വേണം?"],
+        mlLatn: ["Suprabhatham. Ningalkku enthanu vendathu?", "Namaskaram. Ningalkku enthu venam?", "Namaskaram. Ningalk enth venam?"],
       },
     },
     {
@@ -152,6 +158,8 @@ const CAFE_SCENE = {
         sv: ["Till mig en kaffe med mjölk, tack.", "Jag tar en latte, tack."],
         he: ["בשבילי קפה עם חלב, בבקשה.", "בשבילי הפוך, בבקשה."],
         heLatn: ["Bishvili kafe im halav, bevakasha."],
+        ml: ["എനിക്ക് ഒരു പാൽ കാപ്പി, ദയവായി.", "എനിക്ക് ഒരു പാൽ കാപ്പി മതി."],
+        mlLatn: ["Enikku oru paal kaappi, dayavayi.", "Enikku oru paal kaapi mathi.", "Enik oru paal coffee mathi."],
       },
     },
     {
@@ -194,6 +202,8 @@ const CAFE_SCENE = {
         sv: ["Jag vill ha ett grönt te och en croissant."],
         he: ["אני רוצה תה ירוק וקרואסון."],
         heLatn: ["Ani rotse te yarok vekruason."],
+        ml: ["എനിക്ക് ഒരു ഗ്രീൻ ടീയും ഒരു ക്രോയിസന്റും വേണം."],
+        mlLatn: ["Enikku oru green teayum oru croissantum venam.", "Enik oru green teayum oru croissantum venam."],
       },
     },
     {
@@ -236,6 +246,8 @@ const CAFE_SCENE = {
         sv: ["Mycket bra. Jag kommer med det direkt."],
         he: ["בסדר גמור. אני מביא מיד."],
         heLatn: ["Beseder gamur. Ani mevi miyad."],
+        ml: ["ശരി. ഞാൻ ഇപ്പോൾ തന്നെ കൊണ്ടുവരാം."],
+        mlLatn: ["Shari. Njan ippol thanne konduvaraam.", "Sheri. Njan ippo thanne kondu varam."],
       },
     },
     {
@@ -278,6 +290,8 @@ const CAFE_SCENE = {
         sv: ["Du, vad ska du göra i helgen?"],
         he: ["תגיד, מה אתה עושה בסוף השבוע?"],
         heLatn: ["Tagid, ma ata ose besof hashavua?"],
+        ml: ["എടാ, ഈ വീക്കെൻഡിൽ നീ എന്താ ചെയ്യാൻ പോകുന്നത്?"],
+        mlLatn: ["Eda, ee weekendil nee entha cheyyan pokunnathu?", "Eda, ee weekend nee enthu cheyyan pokunnu?"],
       },
     },
     {
@@ -320,6 +334,8 @@ const CAFE_SCENE = {
         sv: ["Jag vet inte än. Kanske åker jag till stranden."],
         he: ["אני עוד לא יודע. אולי אסע לים."],
         heLatn: ["Ani od lo yodea. Ulay esa layam."],
+        ml: ["ഇതുവരെ അറിയില്ല. ചിലപ്പോൾ ബീച്ചിൽ പോകും."],
+        mlLatn: ["Ithuvare ariyilla. Chilappol beachil pokum.", "Ithuvare ariyilla. Chilappo beachil pokum."],
       },
     },
     {
@@ -362,6 +378,8 @@ const CAFE_SCENE = {
         sv: ["Vilken bra idé! Får jag följa med?"],
         he: ["איזה רעיון טוב! אפשר לבוא איתך?"],
         heLatn: ["Eize raayon tov! Efshar lavo itkha?"],
+        ml: ["നല്ല ഐഡിയ! ഞാനും നിന്റെ കൂടെ വരട്ടെ?", "എന്ത് നല്ല ആശയം! ഞാനും കൂടെ വരട്ടെ?"],
+        mlLatn: ["Nalla idea! Njanum ninte koode varatte?", "Enthu nalla aashayam! Njanum koode varatte?"],
       },
     },
     {
@@ -404,6 +422,8 @@ const CAFE_SCENE = {
         sv: ["Självklart. Vi åker tidigt på lördag."],
         he: ["בטח. אנחנו יוצאים מוקדם בשבת."],
         heLatn: ["Betakh. Anakhnu yotsim mukdam beshabat."],
+        ml: ["തീർച്ചയായും. നമ്മൾ ശനിയാഴ്ച രാവിലെ നേരത്തെ ഇറങ്ങും."],
+        mlLatn: ["Theerchayayum. Nammal shaniyazhcha raavile nerathe irangum.", "Theerchayayum. Nammal shaniyaazhcha ravile nerathe irangum."],
       },
     },
     {
@@ -446,6 +466,8 @@ const CAFE_SCENE = {
         sv: ["Varsågoda. Det blir sex euro totalt."],
         he: ["בבקשה. זה שישה יורו בסך הכול."],
         heLatn: ["Bevakasha. Ze shisha yuro besakh hakol."],
+        ml: ["ഇതാ. ആകെ ആറ് യൂറോ ആയി.", "ഇതാ. മൊത്തത്തിൽ ആറ് യൂറോ ആയി."],
+        mlLatn: ["Itha. Aake aaru euro aayi.", "Itha. Mothathil aaru euro aayi."],
       },
     },
     {
@@ -488,6 +510,8 @@ const CAFE_SCENE = {
         sv: ["Tack. I dag bjuder jag."],
         he: ["תודה. היום אני מזמינה."],
         heLatn: ["Toda. Hayom ani mazmina."],
+        ml: ["നന്ദി. ഇന്ന് എന്റെ വക.", "നന്ദി. ഇന്ന് ഞാൻ കൊടുക്കാം."],
+        mlLatn: ["Nanni. Innu ente vaka.", "Nanni. Innu njan kodukkam."],
       },
     },
   ],
@@ -498,5 +522,5 @@ const CAFE_SCENE = {
 function scoreLine(attempt, line, language) {
   const { altScript, byCharacter } = LANGUAGES[language];
   const nativeScore = scoreTranslation(attempt, line.text[language], byCharacter);
-  return altScript ? Math.max(nativeScore, scoreTranslation(attempt, line.text[altScript])) : nativeScore;
+  return altScript && line.text[altScript] ? Math.max(nativeScore, scoreTranslation(attempt, line.text[altScript])) : nativeScore;
 }

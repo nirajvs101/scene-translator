@@ -19,7 +19,7 @@ function matchingLanguages(query) {
   const startsWith = [];
   const contains = [];
   for (const [code, language] of entries) {
-    const names = [language.name, language.nativeName].map(simplifyForSearch);
+    const names = [language.name, language.nativeName, language.romanizedName || ""].map(simplifyForSearch);
     if (names.some((name) => name.startsWith(search))) {
       startsWith.push(code);
     } else if (names.some((name) => name.includes(search))) {
