@@ -15,6 +15,8 @@
   --off: #b02323;
   --off-bg: #ffecec;
   --display-font: "Fredoka", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Scripts Nunito lacks (Devanagari, Arabic, CJK…) fall back to the system font. */
+  --body-font: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 * {
@@ -25,7 +27,7 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--text);
-  font: 17px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  font: 17px/1.5 var(--body-font);
 }
 
 .top-bar {
@@ -104,7 +106,7 @@ main {
   margin-top: 4px;
   min-width: 180px;
   text-align: left;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--body-font);
 }
 
 .picker-button::after {
@@ -510,6 +512,8 @@ button.danger {
 
 .line {
   padding: 14px 16px;
+  /* Keeps a line that Play scene scrolls to clear of the pinned top bar. */
+  scroll-margin-top: 80px;
 }
 
 .speaker-name {
@@ -523,6 +527,17 @@ button.danger {
   border-radius: 16px 16px 16px 4px;
   background: color-mix(in srgb, var(--speaker-color) 12%, white);
   font-size: 1.1rem;
+}
+
+.original {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.original-text {
+  flex: 1;
+  min-width: 0;
 }
 
 .original p {
@@ -560,6 +575,87 @@ textarea:focus {
   height: 48px;
   padding: 0;
   font-size: 1.3rem;
+}
+
+.speak {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 1.1rem;
+}
+
+.answer-row .speak {
+  width: 48px;
+  height: 48px;
+  font-size: 1.3rem;
+}
+
+.result .speak {
+  width: 34px;
+  height: 34px;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.speak.speaking {
+  background: var(--accent);
+  border-color: var(--accent-edge);
+  animation: pulse-speak 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-speak {
+  50% {
+    box-shadow: 0 0 0 6px var(--accent-soft);
+  }
+}
+
+.line.playing {
+  outline: 3px solid var(--speaker-color);
+  outline-offset: 2px;
+}
+
+.listen-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin: 16px 0 12px;
+}
+
+.listen-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.listen-option input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.speed-group {
+  margin-bottom: 0;
+}
+
+.prompt-button {
+  margin: 6px 8px 0 0;
+  padding: 6px 14px;
+  font-size: 0.95rem;
+}
+
+button.prompt-button.primary {
+  padding: 6px 14px;
+  font-size: 0.95rem;
+}
+
+.play-status:not(:empty) {
+  margin: 10px 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
 }
 
 .mic.listening {

@@ -6,7 +6,7 @@
     <title>Scene Translator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -120,6 +120,18 @@
             <div id="to-picker"></div>
           </div>
           <ul id="speaker-legend" class="legend"></ul>
+          <div class="listen-bar">
+            <button type="button" id="play-scene" class="primary" aria-pressed="false">▶ Play scene</button>
+            <label class="listen-option">
+              <input type="checkbox" id="play-translations" />
+              <span id="play-translations-label">Read the translation after each line</span>
+            </label>
+          </div>
+          <fieldset class="option-group speed-group">
+            <legend>Reading speed</legend>
+            <div id="speed-pills" class="option-pills"></div>
+          </fieldset>
+          <p id="play-status" class="play-status" aria-live="polite"></p>
         </div>
       </section>
 
@@ -139,6 +151,8 @@
     <script src="language-picker.js"></script>
     <script src="scene-search.js"></script>
     <script src="custom-scene.js"></script>
+    <script src="ai-voices.js"></script>
+    <script src="speak.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

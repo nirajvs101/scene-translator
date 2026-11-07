@@ -50,12 +50,63 @@ function renderLegend() {
   }
 }
 
-function renderResult(container, line, attempt) {
+function speakOutcomeMessage(outcome, language) {
+  if (outcome === "no-voice") {
+    const name = languageName(language);
+    return `This browser has no ${name} voice, so it can't read ${name} aloud. Try Chrome, or add a ${name} voice in your device's settings.`;
+  }
+  if (outcome === "error") {
+    return canSpeak() ? "Couldn't read that aloud. Try again." : "Reading aloud isn't supported in this browser.";
+  }
+  if (outcome === "fell-back") {
+    return `The natural ${languageName(language)} voice couldn't load, so your device's voice read it instead.`;
+  }
+  return "";
+}
+
+// A 🔊 button that reads text aloud. Clicking it again while it reads stops it.
+function createSpeakButton(label, getText, language, status) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "speak";
+  button.textContent = "🔊";
+  button.title = label;
+  button.setAttribute("aria-label", label);
+  button.addEventListener("click", async () => {
+    if (button.classList.contains("speaking")) {
+      stopSpeaking();
+      return;
+    }
+    const text = getText().trim();
+    if (text === "") {
+      status.textContent = "Nothing to read yet. Type or speak a translation first.";
+      return;
+    }
+    stopScenePlayback();
+    stopListening();
+    status.textContent = "";
+    button.classList.add("speaking");
+    const outcome = await speakText(text, language, status);
+    button.classList.remove("speaking");
+    if (outcome !== "stopped") {
+      status.textContent = speakOutcomeMessage(outcome, language);
+    }
+  });
+  return button;
+}
+
+function renderResult(container, line, attempt, status) {
   container.innerHTML = "";
   const reference = referenceText(line, toLanguage);
+  const speakReference = createSpeakButton(
+    `Hear one way to say it in ${languageName(toLanguage)}`,
+    () => lineText(line, toLanguage).main,
+    toLanguage,
+    status,
+  );
   if (attempt.trim() === "") {
     container.className = "result skipped";
-    container.textContent = `Skipped. One way to say it: ${reference}`;
+    container.append(`Skipped. One way to say it: ${reference} `, speakReference);
     return;
   }
   const score = scoreLine(attempt, line, toLanguage);
@@ -65,8 +116,8 @@ function renderResult(container, line, attempt) {
   const scoreText = document.createElement("strong");
   scoreText.textContent = `${percent}% match`;
   const referenceSpan = document.createElement("span");
-  referenceSpan.textContent = ` · One way to say it: ${reference}`;
-  container.append(scoreText, referenceSpan);
+  referenceSpan.textContent = ` · One way to say it: ${reference} `;
+  container.append(scoreText, referenceSpan, speakReference);
 }
 
 const SPEECH_ERROR_MESSAGES = {
@@ -169,6 +220,9 @@ function startListening(input, micButton, status, onTextChange) {
   recognition.onend = finish;
 
   stopListening();
+  // Otherwise the microphone would hear the app reading aloud.
+  stopScenePlayback();
+  stopSpeaking();
   activeListening = {
     recognition,
     stop: stopThenFinish,
@@ -187,26 +241,37 @@ function startListening(input, micButton, status, onTextChange) {
   recognition.start();
 }
 
-function renderOriginal(line) {
+function renderOriginal(line, status) {
   const { main, alt } = lineText(line, fromLanguage);
   const original = document.createElement("div");
   original.className = "original";
+  const texts = document.createElement("div");
+  texts.className = "original-text";
   const mainText = document.createElement("p");
   mainText.lang = fromLanguage;
   mainText.dir = "auto";
   mainText.textContent = main;
-  original.appendChild(mainText);
+  texts.appendChild(mainText);
   if (alt) {
     const romanized = document.createElement("p");
     romanized.className = "romanized";
     romanized.textContent = alt;
-    original.appendChild(romanized);
+    texts.appendChild(romanized);
   }
+  const speakOriginal = createSpeakButton(
+    `Hear ${scene.speakers[line.speaker].name}'s line in ${languageName(fromLanguage)}`,
+    () => main,
+    fromLanguage,
+    status,
+  );
+  original.append(texts, speakOriginal);
   return original;
 }
 
 function renderDialogue() {
   stopListening();
+  stopScenePlayback();
+  stopSpeaking();
   const targetName = languageName(toLanguage);
   const answers = currentAnswers();
   const list = document.getElementById("dialogue");
@@ -262,17 +327,145 @@ function renderDialogue() {
       }
     });
 
+    const speakAnswer = createSpeakButton(
+      `Hear your ${targetName} translation`,
+      () => input.value,
+      toLanguage,
+        micStatus,
+    );
+
     const answerRow = document.createElement("div");
     answerRow.className = "answer-row";
-    answerRow.append(input, micButton);
+    answerRow.append(input, speakAnswer, micButton);
 
     if (showResults) {
-      renderResult(result, line, input.value);
+      renderResult(result, line, input.value, micStatus);
     }
 
-    item.append(name, renderOriginal(line), answerRow, micStatus, result);
+    item.append(name, renderOriginal(line, micStatus), answerRow, micStatus, result);
     list.appendChild(item);
   });
+}
+
+let scenePlayback = null;
+
+function setPlayButton(isPlaying) {
+  const button = document.getElementById("play-scene");
+  button.textContent = isPlaying ? "⏹ Stop" : "▶ Play scene";
+  button.setAttribute("aria-pressed", String(isPlaying));
+}
+
+function stopScenePlayback() {
+  if (scenePlayback) {
+    scenePlayback.stopped = true;
+    scenePlayback = null;
+    stopSpeaking();
+    setPlayButton(false);
+  }
+}
+
+// Each line in order, followed by its reference translation when that box is ticked.
+function scenePartsToRead(withTranslations) {
+  return scene.lines.flatMap((line, lineIndex) => {
+    const parts = [{ lineIndex, text: lineText(line, fromLanguage).main, language: fromLanguage }];
+    if (withTranslations) {
+      parts.push({ lineIndex, text: lineText(line, toLanguage).main, language: toLanguage });
+    }
+    return parts;
+  });
+}
+
+// Reads the whole scene, highlighting and scrolling to the line being read.
+// Any voice downloads are asked about first, and each next line's audio is
+// made while the current one plays, so there are no long pauses.
+async function playScene() {
+  stopListening();
+  stopScenePlayback();
+  const token = beginSpeech();
+  const playback = { stopped: false };
+  scenePlayback = playback;
+  const status = document.getElementById("play-status");
+  status.textContent = "";
+  setPlayButton(true);
+
+  const withTranslations = document.getElementById("play-translations").checked;
+  const choices = {};
+  for (const language of withTranslations ? [fromLanguage, toLanguage] : [fromLanguage]) {
+    choices[language] = await chooseVoice(language, status, token);
+    if (!choices[language]) {
+      playback.stopped = true;
+    }
+  }
+
+  const parts = playback.stopped ? [] : scenePartsToRead(withTranslations);
+  const items = document.querySelectorAll("#dialogue > li");
+  const prepare = (part) => part && prepareSpeech(choices[part.language], part.text, status);
+  let nextAudio = prepare(parts[0]);
+  for (const [index, part] of parts.entries()) {
+    const audio = nextAudio;
+    nextAudio = prepare(parts[index + 1]);
+    const item = items[part.lineIndex];
+    item.classList.add("playing");
+    item.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const outcome = await speakPrepared(choices[part.language], audio, part.text, status, token);
+    if (outcome === "fell-back") {
+      status.textContent = speakOutcomeMessage(outcome, part.language);
+      choices[part.language] = { kind: "device", language: part.language };
+    } else if (outcome !== "done") {
+      status.textContent = speakOutcomeMessage(outcome, part.language);
+      playback.stopped = true;
+    }
+    const lineFinished = !parts[index + 1] || parts[index + 1].lineIndex !== part.lineIndex;
+    if (lineFinished || playback.stopped) {
+      item.classList.remove("playing");
+    }
+    if (playback.stopped) {
+      break;
+    }
+  }
+  if (scenePlayback === playback) {
+    scenePlayback = null;
+    setPlayButton(false);
+  }
+}
+
+const SPEECH_RATE_KEY = "scene-translator-speech-rate";
+
+// Remembers the chosen speed in this browser; private windows may refuse.
+function loadSpeechRate() {
+  try {
+    const saved = Number(localStorage.getItem(SPEECH_RATE_KEY));
+    return SPEECH_RATES.includes(saved) ? saved : 1;
+  } catch {
+    return 1;
+  }
+}
+
+function renderSpeedPills() {
+  const chosen = loadSpeechRate();
+  setSpeechRate(chosen);
+  const pills = document.getElementById("speed-pills");
+  for (const rate of SPEECH_RATES) {
+    const label = document.createElement("label");
+    label.className = "option-pill";
+    const radio = document.createElement("input");
+    radio.type = "radio";
+    radio.name = "speech-rate";
+    radio.value = String(rate);
+    radio.checked = rate === chosen;
+    radio.addEventListener("change", () => {
+      setSpeechRate(rate);
+      try {
+        localStorage.setItem(SPEECH_RATE_KEY, String(rate));
+      } catch {
+        // The speed still applies until the page closes.
+      }
+    });
+    const text = document.createElement("span");
+    text.textContent = rate === 1 ? "Normal" : `${rate}×`;
+    label.append(radio, text);
+    pills.appendChild(label);
+  }
 }
 
 function checkAll() {
@@ -333,6 +526,9 @@ function showScene(notice = "") {
   document.getElementById("scene-notice").textContent = notice;
   document.getElementById("scene-title").textContent = scene.title[fromLanguage] || scene.title.en;
   document.getElementById("scene-description").textContent = scene.description;
+  document.getElementById("play-status").textContent = "";
+  document.getElementById("play-translations-label").textContent =
+    `Also read the ${languageName(toLanguage)} translation after each line`;
   document.getElementById("custom-languages").textContent =
     `It will be in ${languageName(fromLanguage)} and ${languageName(toLanguage)}. To use others, change From and To below first.`;
   markChosenScene();
@@ -574,5 +770,13 @@ document.getElementById("swap-button").addEventListener("click", () => setLangua
 document.getElementById("check-button").addEventListener("click", checkAll);
 document.getElementById("reset-button").addEventListener("click", clearAnswers);
 document.getElementById("scene-search").addEventListener("input", renderScenePicker);
+document.getElementById("play-scene").addEventListener("click", () => {
+  if (scenePlayback) {
+    stopScenePlayback();
+  } else {
+    playScene();
+  }
+});
+renderSpeedPills();
 renderScenePicker();
 setLanguages(fromLanguage, toLanguage);
