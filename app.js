@@ -1,4 +1,5 @@
-// Draws the scene and handles checking translations.
+// Sets up the page: scenes, languages, speaking, listening, and reading aloud.
+// The line-by-line practice itself is in practice.js.
 
 // Chrome and Safari still expose speech recognition under a "webkit" prefix.
 const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -12,7 +13,6 @@ let fromLanguage = "es";
 let toLanguage = "en";
 // Separate answers per scene and language pair so switching doesn't erase what was typed.
 const answersByPair = {};
-let showResults = false;
 
 function answersKey() {
   return `${scene.id}:${fromLanguage}-${toLanguage}`;
@@ -93,31 +93,6 @@ function createSpeakButton(label, getText, language, status) {
     }
   });
   return button;
-}
-
-function renderResult(container, line, attempt, status) {
-  container.innerHTML = "";
-  const reference = referenceText(line, toLanguage);
-  const speakReference = createSpeakButton(
-    `Hear one way to say it in ${languageName(toLanguage)}`,
-    () => lineText(line, toLanguage).main,
-    toLanguage,
-    status,
-  );
-  if (attempt.trim() === "") {
-    container.className = "result skipped";
-    container.append(`Skipped. One way to say it: ${reference} `, speakReference);
-    return;
-  }
-  const score = scoreLine(attempt, line, toLanguage);
-  const percent = Math.round(score * 100);
-  container.className = `result ${scoreLabel(score)}`;
-
-  const scoreText = document.createElement("strong");
-  scoreText.textContent = `${percent}% match`;
-  const referenceSpan = document.createElement("span");
-  referenceSpan.textContent = ` · One way to say it: ${reference} `;
-  container.append(scoreText, referenceSpan, speakReference);
 }
 
 const SPEECH_ERROR_MESSAGES = {
@@ -268,85 +243,6 @@ function renderOriginal(line, status) {
   return original;
 }
 
-function renderDialogue() {
-  stopListening();
-  stopScenePlayback();
-  stopSpeaking();
-  const targetName = languageName(toLanguage);
-  const answers = currentAnswers();
-  const list = document.getElementById("dialogue");
-  list.innerHTML = "";
-
-  scene.lines.forEach((line, index) => {
-    const speaker = scene.speakers[line.speaker];
-    const item = document.createElement("li");
-    item.className = "line";
-    item.style.setProperty("--speaker-color", speaker.color);
-
-    const name = document.createElement("div");
-    name.className = "speaker-name";
-    name.textContent = speaker.name;
-
-    const input = document.createElement("textarea");
-    input.rows = 2;
-    input.lang = toLanguage;
-    input.dir = "auto";
-    input.placeholder = `${speaker.name}'s line in ${targetName}…`;
-    input.setAttribute("aria-label", `Your ${targetName} translation of ${speaker.name}, line ${index + 1}`);
-    input.value = answers[index] || "";
-
-    const result = document.createElement("div");
-    result.className = "result";
-    result.setAttribute("aria-live", "polite");
-
-    const saveAnswer = () => {
-      answers[index] = input.value;
-      result.className = "result";
-      result.innerHTML = "";
-    };
-    input.addEventListener("input", saveAnswer);
-
-    const micButton = document.createElement("button");
-    micButton.type = "button";
-    micButton.className = "mic";
-    micButton.textContent = "🎤";
-    micButton.setAttribute("aria-pressed", "false");
-    micButton.setAttribute("aria-label", `Speak ${speaker.name}'s line in ${targetName}`);
-    micButton.title = `Speak your translation in ${targetName}`;
-
-    const micStatus = document.createElement("div");
-    micStatus.className = "mic-status";
-    micStatus.setAttribute("aria-live", "polite");
-
-    micButton.addEventListener("click", () => {
-      if (micButton.classList.contains("listening")) {
-        activeListening.stop();
-      } else {
-        micStatus.textContent = "";
-        startListening(input, micButton, micStatus, saveAnswer);
-      }
-    });
-
-    const speakAnswer = createSpeakButton(
-      `Hear your ${targetName} translation`,
-      () => input.value,
-      toLanguage,
-        micStatus,
-    );
-
-    const answerRow = document.createElement("div");
-    answerRow.className = "answer-row";
-    answerRow.append(input, speakAnswer, micButton);
-
-    if (showResults) {
-      renderResult(result, line, input.value, micStatus);
-    }
-
-    item.append(name, renderOriginal(line, micStatus), answerRow, micStatus, result);
-    list.appendChild(item);
-  });
-}
-
 let scenePlayback = null;
 
 function setPlayButton(isPlaying) {
@@ -398,15 +294,17 @@ async function playScene() {
   }
 
   const parts = playback.stopped ? [] : scenePartsToRead(withTranslations);
-  const items = document.querySelectorAll("#dialogue > li");
   const prepare = (part) => part && prepareSpeech(choices[part.language], part.text, status);
   let nextAudio = prepare(parts[0]);
   for (const [index, part] of parts.entries()) {
     const audio = nextAudio;
     nextAudio = prepare(parts[index + 1]);
-    const item = items[part.lineIndex];
-    item.classList.add("playing");
-    item.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    // Lines you haven't reached yet aren't on screen, so only shown ones light up.
+    const item = document.querySelector(`#dialogue [data-line-index="${part.lineIndex}"]`);
+    if (item) {
+      item.classList.add("playing");
+      item.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
     const outcome = await speakPrepared(choices[part.language], audio, part.text, status, token);
     if (outcome === "fell-back") {
       status.textContent = speakOutcomeMessage(outcome, part.language);
@@ -416,7 +314,7 @@ async function playScene() {
       playback.stopped = true;
     }
     const lineFinished = !parts[index + 1] || parts[index + 1].lineIndex !== part.lineIndex;
-    if (lineFinished || playback.stopped) {
+    if (item && (lineFinished || playback.stopped)) {
       item.classList.remove("playing");
     }
     if (playback.stopped) {
@@ -468,27 +366,6 @@ function renderSpeedPills() {
   }
 }
 
-function checkAll() {
-  showResults = true;
-  renderDialogue();
-
-  const answers = currentAnswers();
-  const attempted = scene.lines
-    .map((line, index) => ({ line, attempt: answers[index] || "" }))
-    .filter(({ attempt }) => attempt.trim() !== "");
-  const summary = document.getElementById("summary");
-  if (attempted.length === 0) {
-    summary.textContent = "Try at least one line, then check again.";
-    return;
-  }
-  const total = attempted.reduce(
-    (sum, { line, attempt }) => sum + scoreLine(attempt, line, toLanguage),
-    0,
-  );
-  const average = Math.round((total / attempted.length) * 100);
-  summary.textContent = `Average match: ${average}% across ${attempted.length} of ${scene.lines.length} lines.`;
-}
-
 const fromPicker = createLanguagePicker(document.getElementById("from-picker"), "From", (code) =>
   setLanguages(code, toLanguage),
 );
@@ -519,10 +396,8 @@ function setLanguages(newFrom, newTo) {
   showScene(notice);
 }
 
-// Draws the current scene from scratch, with results hidden until the next check.
+// Draws the current scene, picking up where you left off in it.
 function showScene(notice = "") {
-  showResults = false;
-  document.getElementById("summary").textContent = "";
   document.getElementById("scene-notice").textContent = notice;
   document.getElementById("scene-title").textContent = scene.title[fromLanguage] || scene.title.en;
   document.getElementById("scene-description").textContent = scene.description;
@@ -581,13 +456,6 @@ function renderScenePicker() {
     picker.appendChild(chip);
   }
   markChosenScene();
-}
-
-function clearAnswers() {
-  answersByPair[answersKey()] = [];
-  showResults = false;
-  document.getElementById("summary").textContent = "";
-  renderDialogue();
 }
 
 let pendingScene = null;
@@ -767,8 +635,12 @@ document.getElementById("custom-cancel").addEventListener("click", cancelPending
 document.getElementById("remove-no").addEventListener("click", keepSceneToDelete);
 document.getElementById("remove-yes").addEventListener("click", deleteChosenScene);
 document.getElementById("swap-button").addEventListener("click", () => setLanguages(toLanguage, fromLanguage));
-document.getElementById("check-button").addEventListener("click", checkAll);
-document.getElementById("reset-button").addEventListener("click", clearAnswers);
+document.getElementById("reset-button").addEventListener("click", resetRun);
+document.getElementById("skip-all-button").addEventListener("click", askToSkipAll);
+document.getElementById("skip-all-yes").addEventListener("click", skipToResults);
+document.getElementById("skip-all-no").addEventListener("click", closeSkipAllConfirm);
+document.getElementById("play-again").addEventListener("click", resetRun);
+document.getElementById("pick-another").addEventListener("click", pickAnotherScene);
 document.getElementById("scene-search").addEventListener("input", renderScenePicker);
 document.getElementById("play-scene").addEventListener("click", () => {
   if (scenePlayback) {

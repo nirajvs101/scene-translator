@@ -711,11 +711,348 @@ button.prompt-button.primary {
   margin: 20px 0 8px;
 }
 
-.summary {
-  font: 500 1.1rem var(--display-font);
-  color: var(--accent-edge);
-  min-height: 1.5em;
+/* ---- Line-by-line practice ---- */
+
+.practice {
   margin-bottom: 40px;
+}
+
+.progress-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.progress-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skip-all-confirm {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  animation: card-enter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.skip-all-confirm p {
+  margin: 0 0 10px;
+}
+
+.skip-all-confirm button {
+  margin: 0 8px 4px 0;
+}
+
+.progress-label {
+  font: 600 1.1rem var(--display-font);
+  color: var(--accent-edge);
+}
+
+.progress-bar {
+  height: 12px;
+  margin-bottom: 16px;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  overflow: hidden;
+}
+
+.progress-bar span {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.thread {
+  gap: 8px;
+}
+
+.past-line {
+  scroll-margin-top: 80px;
+  padding: 8px 12px;
+  border-left: 6px solid var(--speaker-color);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 0 2px 0 var(--border);
+  font-size: 0.95rem;
+  view-transition-class: thread-line;
+}
+
+.past-speaker {
+  font: 600 0.95rem var(--display-font);
+  color: color-mix(in srgb, var(--speaker-color) 75%, black);
+}
+
+.past-answer {
+  display: block;
+  color: var(--muted);
+}
+
+.past-line.playing {
+  outline: 3px solid var(--speaker-color);
+  outline-offset: 2px;
+}
+
+.chip {
+  display: inline-block;
+  padding: 0 8px;
+  border-radius: 999px;
+  font: 600 0.8rem/1.6 var(--display-font);
+  white-space: nowrap;
+}
+
+.chip.good {
+  background: var(--good-bg);
+  color: var(--good);
+}
+
+.chip.partial {
+  background: var(--partial-bg);
+  color: var(--partial);
+}
+
+.chip.off {
+  background: var(--off-bg);
+  color: var(--off);
+}
+
+.chip.skipped {
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.current-card {
+  margin-top: 6px;
+  box-shadow: 0 4px 0 var(--border), 0 10px 24px rgb(15 42 68 / 0.08);
+  view-transition-class: thread-line;
+}
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.card-actions .primary {
+  flex: 1;
+}
+
+mark.missed {
+  background: none;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline wavy var(--off);
+  text-underline-offset: 3px;
+}
+
+/* The next card rises into place (browsers without view transitions). */
+.current-card.entering {
+  animation: card-enter 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+}
+
+/* A little bounce for a great answer. */
+.current-card.celebrate .result {
+  animation: celebrate 0.5s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+@keyframes celebrate {
+  0% {
+    transform: scale(0.9);
+  }
+  60% {
+    transform: scale(1.03);
+  }
+}
+
+/* With view transitions, the finished card shrinks into the thread and the
+   next card rises in. */
+::view-transition-group(*.thread-line) {
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+::view-transition-new(*.thread-line):only-child {
+  animation: card-enter 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+::view-transition-old(*.thread-line):only-child {
+  animation: fade-out 0.2s ease-in forwards;
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* ---- Results ---- */
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 40px;
+  scroll-margin-top: 80px;
+  animation: card-enter 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.results[hidden] {
+  display: none;
+}
+
+.results-hero {
+  text-align: center;
+}
+
+.stars {
+  font-size: 2.8rem;
+  line-height: 1;
+  letter-spacing: 6px;
+}
+
+.star {
+  display: inline-block;
+  color: var(--border);
+}
+
+.star.earned {
+  color: #f2b100;
+  animation: star-pop 0.45s var(--star-delay) cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+
+@keyframes star-pop {
+  from {
+    transform: scale(0);
+  }
+}
+
+.result-average {
+  margin: 8px 0 4px;
+  font: 600 1.35rem var(--display-font);
+  color: var(--accent-edge);
+}
+
+.star-rule {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  text-align: center;
+}
+
+.stats div {
+  padding: 10px 6px;
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: 0 3px 0 var(--border);
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.stats b {
+  display: block;
+  font: 600 1.6rem var(--display-font);
+  color: var(--text);
+}
+
+.weak-section h3 {
+  margin: 0 0 8px;
+  font: 600 1.15rem var(--display-font);
+  color: var(--accent-edge);
+}
+
+.weak-lines,
+.review-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.weak-lines p,
+.review-lines p {
+  margin: 0;
+}
+
+.weak-detail {
+  color: var(--muted);
+}
+
+.missed-word {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: var(--off-bg);
+  color: var(--off);
+  font-weight: 700;
+}
+
+.review summary {
+  cursor: pointer;
+  font: 600 1.05rem var(--display-font);
+  color: var(--accent-edge);
+}
+
+.review-lines {
+  margin-top: 12px;
+}
+
+.review-lines li {
+  padding-left: 10px;
+  border-left: 5px solid var(--speaker-color);
+}
+
+.review-lines .speak {
+  width: 32px;
+  height: 32px;
+  font-size: 0.9rem;
+  vertical-align: middle;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .current-card.entering,
+  .current-card.celebrate .result,
+  .skip-all-confirm,
+  .star.earned,
+  .results {
+    animation: none;
+  }
+
+  .progress-bar span {
+    transition: none;
+  }
 }
 
 @media (max-width: 520px) {

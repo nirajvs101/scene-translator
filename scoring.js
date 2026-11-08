@@ -102,6 +102,48 @@ function scoreLabel(score) {
   return "off";
 }
 
+// Takes a matching word (exact, or a near miss) out of the pool. Returns
+// whether one was found.
+function takeMatchingWord(pool, word) {
+  let index = pool.indexOf(word);
+  if (index === -1) {
+    const credits = pool.map((candidate) => nearMissCredit(candidate, word));
+    const bestCredit = Math.max(0, ...credits);
+    if (bestCredit === 0) {
+      return false;
+    }
+    index = credits.indexOf(bestCredit);
+  }
+  pool.splice(index, 1);
+  return true;
+}
+
+// Splits the reference closest to the attempt into pieces, marking the
+// words the attempt left out so they can be underlined. Spaces are kept as
+// their own pieces, so joining every piece gives back the reference.
+function compareWithReference(attempt, references, byCharacter = false) {
+  const scored = references.map((reference) => ({ reference, score: overlapScore(attempt, reference, byCharacter) }));
+  const best = scored.reduce((closest, candidate) => (candidate.score > closest.score ? candidate : closest));
+  const unusedWords = normalizeText(attempt, byCharacter);
+  const pieces = (byCharacter ? Array.from(best.reference) : best.reference.split(/(\s+)/))
+    .filter((text) => text !== "")
+    .map((text) => {
+      const words = normalizeText(text, byCharacter);
+      const missed = words.length > 0 && !words.every((word) => takeMatchingWord(unusedWords, word));
+      return { text, missed };
+    });
+  return { reference: best.reference, score: best.score, pieces };
+}
+
+// Stars for a finished scene, from the average match across every line
+// (skipped lines count as 0).
+const STAR_THRESHOLDS = [0.9, 0.75, 0.6, 0.4];
+
+function starsFor(average) {
+  const reached = STAR_THRESHOLDS.findIndex((threshold) => average >= threshold);
+  return reached === -1 ? 1 : 5 - reached;
+}
+
 if (typeof module !== "undefined") {
-  module.exports = { normalizeText, overlapScore, scoreTranslation, scoreLabel };
+  module.exports = { normalizeText, overlapScore, scoreTranslation, scoreLabel, compareWithReference, starsFor };
 }

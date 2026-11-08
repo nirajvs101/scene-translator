@@ -135,13 +135,51 @@
         </div>
       </section>
 
-      <ol id="dialogue" class="dialogue"></ol>
+      <section class="practice" aria-label="Translate the scene">
+        <div class="progress-row">
+          <span id="progress-label" class="progress-label"></span>
+          <div class="progress-actions">
+            <button type="button" id="skip-all-button">Skip to results</button>
+            <button type="button" id="reset-button">Start over</button>
+          </div>
+        </div>
+        <div id="skip-all-confirm" class="skip-all-confirm" hidden>
+          <p id="skip-all-message"></p>
+          <button type="button" id="skip-all-yes" class="primary">Yes, skip to results</button>
+          <button type="button" id="skip-all-no">Keep going</button>
+        </div>
+        <div id="progress-bar" class="progress-bar" role="progressbar" aria-label="Lines finished" aria-valuemin="0">
+          <span id="progress-fill"></span>
+        </div>
+        <ol id="dialogue" class="dialogue thread"></ol>
+      </section>
 
-      <div class="actions">
-        <button type="button" id="check-button" class="primary">Check translations</button>
-        <button type="button" id="reset-button">Start over</button>
-      </div>
-      <p id="summary" class="summary" aria-live="polite"></p>
+      <section id="results" class="results" aria-labelledby="results-title" hidden>
+        <div class="card results-hero">
+          <h2 id="results-title" class="visually-hidden">Your results</h2>
+          <div id="result-stars" class="stars" role="img"></div>
+          <p id="result-average" class="result-average"></p>
+          <p class="star-rule">★★★★★ 90%+ · ★★★★ 75%+ · ★★★ 60%+ · ★★ 40%+ · ★ finished. Skipped lines count as 0%.</p>
+        </div>
+        <div class="stats">
+          <div><b id="stat-checked"></b>checked</div>
+          <div><b id="stat-retried"></b>needed a retry</div>
+          <div><b id="stat-skipped"></b>skipped</div>
+        </div>
+        <div id="weak-section" class="card weak-section">
+          <h3>Worth another look</h3>
+          <ul id="weak-lines" class="weak-lines"></ul>
+        </div>
+        <details class="card review">
+          <summary id="review-summary"></summary>
+          <p id="review-status" class="mic-status" aria-live="polite"></p>
+          <ol id="review-lines" class="review-lines"></ol>
+        </details>
+        <div class="actions">
+          <button type="button" id="play-again" class="primary">Play again</button>
+          <button type="button" id="pick-another">Pick another scene</button>
+        </div>
+      </section>
     </main>
 
     <script src="scene.js"></script>
@@ -153,6 +191,7 @@
     <script src="custom-scene.js"></script>
     <script src="ai-voices.js"></script>
     <script src="speak.js"></script>
+    <script src="practice.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
