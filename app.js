@@ -6,7 +6,7 @@ const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRe
 
 let activeListening = null;
 
-const SCENES = [CAFE_SCENE, DOCTOR_SCENE, ...loadCustomScenes()];
+const SCENES = [CAFE_SCENE, DOCTOR_SCENE, DIRECTIONS_SCENE, TRAIN_SCENE, ...loadCustomScenes()];
 
 let scene = SCENES[0];
 let fromLanguage = "es";
