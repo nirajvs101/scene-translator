@@ -1078,6 +1078,7 @@ mark.missed {
   color: var(--text);
 }
 
+.study-section h3,
 .weak-section h3 {
   margin: 0 0 8px;
   font: 600 1.15rem var(--display-font);
@@ -1097,6 +1098,39 @@ mark.missed {
 .weak-lines p,
 .review-lines p {
   margin: 0;
+}
+
+.study-status:empty {
+  display: none;
+}
+
+.study-status {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+.study-status.checking {
+  animation: checking 1.2s ease-in-out infinite;
+}
+
+.study-overall {
+  margin: 0 0 10px;
+}
+
+.study-points {
+  margin: 0;
+  padding-left: 1.4em;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.study-points p {
+  margin: 2px 0 0;
+}
+
+.study-example {
+  color: var(--muted);
 }
 
 .weak-detail {
@@ -1147,6 +1181,7 @@ mark.missed {
 @media (prefers-reduced-motion: reduce) {
   .result-celebration,
   .result.checking,
+  .study-status.checking,
   .current-card.entering,
   .current-card.celebrate .result,
   .hint,

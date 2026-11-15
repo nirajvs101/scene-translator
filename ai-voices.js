@@ -73,7 +73,7 @@ let nextRequestId = 1;
 const pendingRequests = new Map();
 
 function startVoiceWorker() {
-  voiceWorker = new Worker("voice-worker.js", { type: "module" });
+  voiceWorker = new Worker("voice-worker.js?v=fcf34565", { type: "module" });
   voiceWorker.addEventListener("message", (event) => {
     const { id, type } = event.data;
     const request = pendingRequests.get(id);

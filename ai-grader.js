@@ -10,6 +10,9 @@ const aiGraderSettings = {
   fastModel: "gemini-3.5-flash-lite",
   // How long to wait for any grade before falling back to word matching.
   waitMs: 5000,
+  // A summary reads the whole scene, so it may take longer; the stronger
+  // model gets this long, then the fast one gets another try.
+  summaryWaitMs: 15000,
 };
 
 // The grader rejects longer text, so longer answers are graded by words.
@@ -78,4 +81,63 @@ async function gradeWithAi(request) {
   }
   controller.abort();
   return grade;
+}
+
+// What to send for an end-of-scene summary: each line's original, an
+// accepted answer, and what the learner wrote with its score and the AI's
+// reason. Returns null when there's nothing to review (every line skipped).
+function summaryRequestFor(lines, answers, results, fromLanguage, toLanguage) {
+  const reviewed = lines.map((line, index) => ({
+    source: line.text[fromLanguage][0].slice(0, AI_MAX_TEXT_LENGTH),
+    reference: line.text[toLanguage][0].slice(0, AI_MAX_TEXT_LENGTH),
+    answer: results[index].status === "skipped" ? "" : (answers[index] || "").trim().slice(0, AI_MAX_TEXT_LENGTH),
+    score: Math.round(results[index].score * 100),
+    feedback: (results[index].aiFeedback || "").slice(0, AI_MAX_TEXT_LENGTH),
+  }));
+  if (reviewed.every((line) => line.answer === "")) {
+    return null;
+  }
+  return {
+    task: "summary",
+    sourceLanguage: LANGUAGES[fromLanguage].name,
+    targetLanguage: LANGUAGES[toLanguage].name,
+    lines: reviewed,
+  };
+}
+
+// One model's summary as { overall, points: [{ topic, example, fix }] }, or
+// null if it failed, took too long, or came back in the wrong shape.
+async function askForSummary(request, model) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), aiGraderSettings.summaryWaitMs);
+  try {
+    const response = await fetch(aiGraderSettings.url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...request, model }),
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      return null;
+    }
+    const { overall, points } = await response.json();
+    const isText = (value) => typeof value === "string" && value.trim() !== "";
+    if (!isText(overall) || !Array.isArray(points)) {
+      return null;
+    }
+    const goodPoints = points.filter((point) => point && isText(point.topic) && isText(point.example) && isText(point.fix));
+    return { overall: overall.trim(), points: goodPoints.slice(0, 3) };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// The stronger model's summary, or the fast one's if that fails.
+async function summarizeWithAi(request) {
+  return (
+    (await askForSummary(request, aiGraderSettings.strongModel)) ||
+    (await askForSummary(request, aiGraderSettings.fastModel))
+  );
 }

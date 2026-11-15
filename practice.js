@@ -873,8 +873,73 @@ function renderResults(run) {
   document.getElementById("stat-checked").textContent = String(run.results.filter((result) => result.status === "checked").length);
   document.getElementById("stat-retried").textContent = String(run.results.filter((result) => result.checks > 1).length);
   document.getElementById("stat-skipped").textContent = String(run.results.filter((result) => result.status === "skipped").length);
+  renderStudySection(run);
   renderWeakLines(run);
   renderReview(run);
+}
+
+// "What to study next": hidden behind a button, since it asks the AI and
+// takes a few seconds. Starts fresh for every finished run.
+function renderStudySection(run) {
+  const button = document.getElementById("study-button");
+  button.hidden = false;
+  button.disabled = false;
+  button.textContent = "🤖 What should I study?";
+  button.onclick = () => showStudySummary(run);
+  setStudyStatus("");
+  document.getElementById("study-overall").hidden = true;
+  document.getElementById("study-points").replaceChildren();
+}
+
+function setStudyStatus(text, { checking = false } = {}) {
+  const status = document.getElementById("study-status");
+  status.textContent = text;
+  status.classList.toggle("checking", checking);
+}
+
+async function showStudySummary(run) {
+  const button = document.getElementById("study-button");
+  const request = summaryRequestFor(scene.lines, currentAnswers(), run.results, fromLanguage, toLanguage);
+  if (!request) {
+    setStudyStatus("You skipped every line, so there's nothing to look over yet. Play again and try a few.");
+    return;
+  }
+  button.disabled = true;
+  setStudyStatus("🤖 Looking over your answers…", { checking: true });
+  const summary = await summarizeWithAi(request);
+  // Ignore a summary that arrives after Play again or another scene.
+  if (currentRun() !== run || document.getElementById("results").hidden) {
+    return;
+  }
+  if (!summary) {
+    button.disabled = false;
+    button.textContent = "Try again";
+    setStudyStatus("The AI couldn't answer just now. Wait a minute and try again.");
+    return;
+  }
+  button.hidden = true;
+  setStudyStatus("");
+  const overall = document.getElementById("study-overall");
+  overall.textContent = summary.points.length > 0 ? summary.overall : `${summary.overall} Nothing stands out to study here.`;
+  overall.hidden = false;
+  document.getElementById("study-points").replaceChildren(...summary.points.map(renderStudyPoint));
+}
+
+// One thing to study: the pattern, the learner's own words, and the fix.
+function renderStudyPoint({ topic, example, fix }) {
+  const item = document.createElement("li");
+  const title = document.createElement("strong");
+  title.textContent = topic;
+  const wrote = document.createElement("p");
+  wrote.className = "study-example";
+  wrote.dir = "auto";
+  wrote.textContent = `You wrote: ${example}`;
+  const better = document.createElement("p");
+  better.className = "study-fix";
+  better.dir = "auto";
+  better.textContent = `Try: ${fix}`;
+  item.append(title, wrote, better);
+  return item;
 }
 
 function pickAnotherScene() {
