@@ -407,14 +407,23 @@ function showScene(notice = "") {
   document.getElementById("custom-languages").textContent =
     `It will be in ${languageName(fromLanguage)} and ${languageName(toLanguage)}. To use others, change From and To below first.`;
   markChosenScene();
+  updateSceneStars();
   renderLegend();
   renderDialogue();
+  autoPlayCurrentLine();
 }
 
 function markChosenScene() {
   for (const button of document.querySelectorAll("#scene-picker [data-scene-id]")) {
     button.setAttribute("aria-pressed", String(button.dataset.sceneId === scene.id));
   }
+}
+
+// How long a scene is, counted from its lines so built-in and custom scenes
+// are labeled the same way without storing anything extra.
+function sceneLengthLabel(option) {
+  const count = option.lines.length;
+  return count === 1 ? "1 line" : `${count} lines`;
 }
 
 // Lists the scenes matching the search box. The open scene stays on screen
@@ -430,8 +439,14 @@ function renderScenePicker() {
     const button = document.createElement("button");
     button.type = "button";
     button.dataset.sceneId = option.id;
-    button.textContent = option.title.en;
     button.title = option.description;
+    const name = document.createElement("span");
+    name.className = "scene-name";
+    name.textContent = option.title.en;
+    const length = document.createElement("span");
+    length.className = "scene-length";
+    length.textContent = sceneLengthLabel(option);
+    button.append(name, length);
     button.addEventListener("click", () => {
       scene = option;
       if (sceneHasLanguages(scene, fromLanguage, toLanguage)) {
@@ -442,7 +457,10 @@ function renderScenePicker() {
     });
     const chip = document.createElement("div");
     chip.className = "scene-chip";
-    chip.appendChild(button);
+    chip.dataset.chipFor = option.id;
+    const stars = document.createElement("span");
+    stars.className = "scene-stars";
+    chip.append(button, stars);
     if (option.languages) {
       const deleteButton = document.createElement("button");
       deleteButton.type = "button";
@@ -456,6 +474,27 @@ function renderScenePicker() {
     picker.appendChild(chip);
   }
   markChosenScene();
+  updateSceneStars();
+}
+
+// Shows the best stars for the chosen languages under each scene button;
+// scenes not yet finished in these languages show none.
+function updateSceneStars() {
+  for (const chip of document.querySelectorAll("#scene-picker [data-chip-for]")) {
+    const best = bestStarsFor(chip.dataset.chipFor, fromLanguage, toLanguage);
+    const stars = chip.querySelector(".scene-stars");
+    stars.hidden = best === 0;
+    stars.replaceChildren();
+    if (best > 0) {
+      const symbols = document.createElement("span");
+      symbols.setAttribute("aria-hidden", "true");
+      symbols.textContent = "★".repeat(best) + "☆".repeat(5 - best);
+      const words = document.createElement("span");
+      words.className = "visually-hidden";
+      words.textContent = `Your best: ${best} out of 5 stars`;
+      stars.append(symbols, words);
+    }
+  }
 }
 
 let pendingScene = null;
@@ -650,5 +689,7 @@ document.getElementById("play-scene").addEventListener("click", () => {
   }
 });
 renderSpeedPills();
+setUpAutoPlay();
+setUpSoundEffects();
 renderScenePicker();
 setLanguages(fromLanguage, toLanguage);

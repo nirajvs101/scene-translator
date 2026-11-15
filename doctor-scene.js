@@ -42,8 +42,8 @@ const DOCTOR_SCENE = {
     {
       speaker: "receptionist",
       text: {
-        en: ["Good afternoon. Do you have an appointment?", "Good afternoon. Do you have an appointment today?"],
-        es: ["Buenas tardes. ¿Tiene cita?", "Buenas tardes. ¿Tiene usted cita?"],
+        en: ["Good afternoon. Do you have an appointment?", "Good afternoon. Do you have an appointment today?", "Hello. Do you have an appointment?"],
+        es: ["Buenas tardes. ¿Tiene cita?", "Buenas tardes. ¿Tiene usted cita?", "Buenas tardes. ¿Tiene una cita?"],
         fr: ["Bonjour. Vous avez rendez-vous ?", "Bonjour. Avez-vous un rendez-vous ?"],
         de: ["Guten Tag. Haben Sie einen Termin?"],
         it: ["Buon pomeriggio. Ha un appuntamento?"],
@@ -86,8 +86,8 @@ const DOCTOR_SCENE = {
     {
       speaker: "sofia",
       text: {
-        en: ["Yes, I called yesterday and they gave me one at four.", "Yes, I called yesterday and they gave me an appointment at four."],
-        es: ["Sí, llamé ayer y me dieron una para las cuatro."],
+        en: ["Yes, I called yesterday and they gave me one at four.", "Yes, I called yesterday and they gave me an appointment at four.", "Yes, I called yesterday and got one for four o'clock."],
+        es: ["Sí, llamé ayer y me dieron una para las cuatro.", "Sí, llamé ayer y me dieron cita para las cuatro."],
         fr: ["Oui, j'ai appelé hier et on m'en a donné un à seize heures.", "Oui, j'ai appelé hier et on m'a donné un rendez-vous à quatre heures."],
         de: ["Ja, ich habe gestern angerufen und einen für vier Uhr bekommen."],
         it: ["Sì, ho chiamato ieri e me ne hanno dato uno per le quattro."],
@@ -130,8 +130,8 @@ const DOCTOR_SCENE = {
     {
       speaker: "receptionist",
       text: {
-        en: ["Have a seat, please. The doctor will see you in a few minutes.", "Please sit down. The doctor will see you in a few minutes."],
-        es: ["Siéntese, por favor. El médico la atenderá en unos minutos."],
+        en: ["Have a seat, please. The doctor will see you in a few minutes.", "Please sit down. The doctor will see you in a few minutes.", "Please take a seat. The doctor will be with you in a few minutes."],
+        es: ["Siéntese, por favor. El médico la atenderá en unos minutos.", "Tome asiento, por favor. El médico la atenderá en unos minutos."],
         fr: ["Asseyez-vous, s'il vous plaît. Le médecin va vous recevoir dans quelques minutes.", "Asseyez-vous, s'il vous plaît. Le médecin vous recevra dans quelques minutes."],
         de: ["Nehmen Sie bitte Platz. Der Arzt wird Sie in ein paar Minuten aufrufen.", "Setzen Sie sich bitte. Der Arzt ist in ein paar Minuten für Sie da."],
         it: ["Si accomodi, per favore. Il medico la riceverà tra qualche minuto."],
@@ -174,7 +174,7 @@ const DOCTOR_SCENE = {
     {
       speaker: "doctor",
       text: {
-        en: ["Hello, Sofía. What happened to you?", "Hi, Sofía. What happened?"],
+        en: ["Hello, Sofía. What happened to you?", "Hi, Sofía. What happened?", "Hello, Sofía. What's going on?"],
         es: ["Hola, Sofía. ¿Qué te pasó?", "Hola, Sofía. ¿Qué le pasó?"],
         fr: ["Bonjour, Sofía. Qu'est-ce qui vous est arrivé ?", "Bonjour, Sofía. Que vous est-il arrivé ?"],
         de: ["Hallo, Sofía. Was ist Ihnen passiert?", "Hallo, Sofía. Was ist denn passiert?"],
@@ -218,7 +218,7 @@ const DOCTOR_SCENE = {
     {
       speaker: "sofia",
       text: {
-        en: ["I fell while I was running in the park on Saturday.", "I fell on Saturday while I was running in the park."],
+        en: ["I fell while I was running in the park on Saturday.", "I fell on Saturday while I was running in the park.", "I fell while running in the park on Saturday."],
         es: ["Me caí mientras corría en el parque el sábado.", "El sábado me caí mientras corría en el parque."],
         fr: ["Je suis tombée pendant que je courais au parc samedi.", "Samedi, je suis tombée en courant au parc."],
         de: ["Ich bin am Samstag beim Joggen im Park gestürzt.", "Ich bin hingefallen, als ich am Samstag im Park gelaufen bin."],
@@ -306,7 +306,7 @@ const DOCTOR_SCENE = {
     {
       speaker: "sofia",
       text: {
-        en: ["Yes, and since then I haven't been able to sleep well.", "Yes, and I haven't slept well since then."],
+        en: ["Yes, and since then I haven't been able to sleep well.", "Yes, and I haven't slept well since then.", "Yes, and I haven't been sleeping well since then."],
         es: ["Sí, y desde entonces no he podido dormir bien."],
         fr: ["Oui, et depuis, je n'arrive pas à bien dormir.", "Oui, et depuis je n'ai pas pu bien dormir."],
         de: ["Ja, und seitdem konnte ich nicht gut schlafen.", "Ja, und seitdem kann ich nicht gut schlafen."],
@@ -394,7 +394,7 @@ const DOCTOR_SCENE = {
     {
       speaker: "sofia",
       text: {
-        en: ["If I rest, will I be able to play soccer next month?", "If I rest, could I play soccer next month?"],
+        en: ["If I rest, will I be able to play soccer next month?", "If I rest, could I play soccer next month?", "If I rest, can I play soccer next month?"],
         es: ["Si descanso, ¿podré jugar al fútbol el mes que viene?", "Si descanso, ¿podré jugar fútbol el próximo mes?"],
         fr: ["Si je me repose, est-ce que je pourrai jouer au foot le mois prochain ?", "Si je me repose, est-ce que je pourrai jouer au football le mois prochain ?"],
         de: ["Wenn ich mich ausruhe, kann ich dann nächsten Monat Fußball spielen?"],
@@ -438,7 +438,7 @@ const DOCTOR_SCENE = {
     {
       speaker: "doctor",
       text: {
-        en: ["I hope so. Put ice on it and come back if it doesn't get better.", "I hope so. Ice it, and come back if it doesn't improve."],
+        en: ["I hope so. Put ice on it and come back if it doesn't get better.", "I hope so. Ice it, and come back if it doesn't improve.", "I hope so. Put some ice on it and come back if it's not better."],
         es: ["Espero que sí. Ponte hielo y vuelve si no mejora.", "Espero que sí. Póngase hielo y vuelva si no mejora."],
         fr: ["Je l'espère. Mettez de la glace et revenez si ça ne va pas mieux."],
         de: ["Das hoffe ich. Kühlen Sie ihn mit Eis und kommen Sie wieder, wenn es nicht besser wird."],

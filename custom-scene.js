@@ -50,7 +50,7 @@ Languages: ${languageNames}.${romanizedNote}
 Use about ${options.length} lines and ${options.speakers} speakers.
 The learner's level is ${options.level}.${toneNote}
 ${grammarNote}
-Give each line as a list: the best translation first, then up to 2 other correct ways to say it.
+Give each line as a list: the best translation first, then up to 4 other correct ways to say it, including common synonyms and everyday wordings (for example "a latte" as well as "a coffee with milk"), so a learner's natural answer is accepted.
 Reply with only this JSON in a code block:
 {"title":"Short title in English","lines":[{"speaker":"Name",${lineKeys}}]}`;
 }

@@ -77,8 +77,8 @@ const CAFE_SCENE = {
     {
       speaker: "waiter",
       text: {
-        en: ["Good morning. What can I get you?", "Good morning. What would you like?"],
-        es: ["Buenos días. ¿Qué les pongo?"],
+        en: ["Good morning. What can I get you?", "Good morning. What would you like?", "Good morning. What can I bring you?", "Good morning. What will you have?"],
+        es: ["Buenos días. ¿Qué les pongo?", "Buenos días. ¿Qué van a tomar?", "Buenos días. ¿Qué les sirvo?", "Buen día. ¿Qué les pongo?"],
         fr: ["Bonjour. Qu'est-ce que je vous sers ?", "Bonjour. Que désirez-vous ?"],
         de: ["Guten Morgen. Was darf ich Ihnen bringen?", "Guten Morgen. Was möchten Sie?"],
         it: ["Buongiorno. Cosa vi porto?", "Buongiorno. Cosa prendete?"],
@@ -120,9 +120,11 @@ const CAFE_SCENE = {
     },
     {
       speaker: "lucia",
+      // Correct but word-for-word: in a café, people say "a latte".
+      literal: { en: ["For me, a coffee with milk, please.", "A coffee with milk for me, please.", "I'd like a coffee with milk, please."] },
       text: {
-        en: ["For me, a coffee with milk, please.", "I'll have a latte, please."],
-        es: ["Para mí, un café con leche, por favor."],
+        en: ["For me, a coffee with milk, please.", "I'll have a latte, please.", "For me, a latte, please.", "A coffee with milk for me, please.", "I'd like a coffee with milk, please."],
+        es: ["Para mí, un café con leche, por favor.", "Yo quiero un café con leche, por favor.", "Un café con leche para mí, por favor."],
         fr: ["Pour moi, un café au lait, s'il vous plaît.", "Pour moi, un café crème, s'il vous plaît."],
         de: ["Für mich einen Milchkaffee, bitte.", "Ich hätte gern einen Kaffee mit Milch, bitte."],
         it: ["Per me, un caffellatte, per favore.", "Per me un caffè con latte, per favore."],
@@ -165,8 +167,8 @@ const CAFE_SCENE = {
     {
       speaker: "mateo",
       text: {
-        en: ["I want a green tea and a croissant.", "I'd like a green tea and a croissant."],
-        es: ["Yo quiero un té verde y un croissant."],
+        en: ["I want a green tea and a croissant.", "I'd like a green tea and a croissant.", "I'll have a green tea and a croissant."],
+        es: ["Yo quiero un té verde y un croissant.", "Quiero un té verde y un cruasán.", "Para mí, un té verde y un croissant."],
         fr: ["Je voudrais un thé vert et un croissant.", "Moi, je veux un thé vert et un croissant."],
         de: ["Ich möchte einen grünen Tee und ein Croissant."],
         it: ["Io vorrei un tè verde e un cornetto.", "Io prendo un tè verde e un croissant."],
@@ -209,8 +211,8 @@ const CAFE_SCENE = {
     {
       speaker: "waiter",
       text: {
-        en: ["Very good. I'll bring it to you right away.", "Very well. I'll bring it right now."],
-        es: ["Muy bien. Ahora mismo se lo traigo."],
+        en: ["Very good. I'll bring it to you right away.", "Very well. I'll bring it right now.", "Great. I'll bring it to you right now.", "Sure. I'll be right back with that."],
+        es: ["Muy bien. Ahora mismo se lo traigo.", "Muy bien. Enseguida se lo traigo.", "Perfecto. Ahora mismo se lo traigo."],
         fr: ["Très bien. Je vous apporte ça tout de suite."],
         de: ["Sehr gut. Ich bringe es Ihnen sofort.", "Sehr gern. Kommt sofort."],
         it: ["Benissimo. Ve lo porto subito.", "Va bene. Arriva subito."],
@@ -253,8 +255,8 @@ const CAFE_SCENE = {
     {
       speaker: "lucia",
       text: {
-        en: ["Hey, what are you going to do this weekend?", "Hey, what are you doing this weekend?"],
-        es: ["Oye, ¿qué vas a hacer este fin de semana?"],
+        en: ["Hey, what are you going to do this weekend?", "Hey, what are you doing this weekend?", "Hey, what are your plans for the weekend?"],
+        es: ["Oye, ¿qué vas a hacer este fin de semana?", "Oye, ¿qué haces este fin de semana?", "Oye, ¿qué planes tienes para el fin de semana?"],
         fr: ["Dis, qu'est-ce que tu fais ce week-end ?", "Dis donc, tu fais quoi ce week-end ?"],
         de: ["Hey, was machst du dieses Wochenende?", "Sag mal, was hast du am Wochenende vor?"],
         it: ["Senti, cosa fai questo fine settimana?", "Ehi, cosa fai questo weekend?"],
@@ -297,8 +299,8 @@ const CAFE_SCENE = {
     {
       speaker: "mateo",
       text: {
-        en: ["I don't know yet. Maybe I'll go to the beach."],
-        es: ["No sé todavía. Quizás vaya a la playa."],
+        en: ["I don't know yet. Maybe I'll go to the beach.", "I don't know yet. I might go to the beach.", "Not sure yet. Maybe I'll go to the beach."],
+        es: ["No sé todavía. Quizás vaya a la playa.", "Todavía no sé. Tal vez vaya a la playa.", "No sé todavía. A lo mejor voy a la playa."],
         fr: ["Je ne sais pas encore. Peut-être que j'irai à la plage."],
         de: ["Ich weiß noch nicht. Vielleicht fahre ich an den Strand."],
         it: ["Non lo so ancora. Forse vado al mare.", "Non so ancora. Magari vado in spiaggia."],
@@ -341,8 +343,8 @@ const CAFE_SCENE = {
     {
       speaker: "lucia",
       text: {
-        en: ["What a good idea! Can I go with you?", "What a great idea! Can I come with you?"],
-        es: ["¡Qué buena idea! ¿Puedo ir contigo?"],
+        en: ["What a good idea! Can I go with you?", "What a great idea! Can I come with you?", "Good idea! Can I come too?"],
+        es: ["¡Qué buena idea! ¿Puedo ir contigo?", "¡Qué buena idea! ¿Puedo ir con ustedes?", "¡Buena idea! ¿Puedo ir yo también?"],
         fr: ["Quelle bonne idée ! Je peux venir avec toi ?", "Bonne idée ! Est-ce que je peux venir avec toi ?"],
         de: ["Was für eine gute Idee! Kann ich mitkommen?", "Gute Idee! Darf ich mitkommen?"],
         it: ["Che bella idea! Posso venire con te?"],
@@ -385,8 +387,8 @@ const CAFE_SCENE = {
     {
       speaker: "mateo",
       text: {
-        en: ["Of course. We leave early on Saturday.", "Of course. We'll leave early Saturday."],
-        es: ["Claro que sí. Salimos el sábado temprano."],
+        en: ["Of course. We leave early on Saturday.", "Of course. We'll leave early Saturday.", "Sure. We're leaving early on Saturday."],
+        es: ["Claro que sí. Salimos el sábado temprano.", "Claro. Salimos temprano el sábado.", "Por supuesto. Salimos el sábado temprano."],
         fr: ["Bien sûr. On part tôt samedi.", "Bien sûr. Nous partons samedi de bonne heure."],
         de: ["Na klar. Wir fahren am Samstag früh los."],
         it: ["Certo. Partiamo sabato mattina presto.", "Certo che sì. Partiamo presto sabato."],
@@ -429,8 +431,8 @@ const CAFE_SCENE = {
     {
       speaker: "waiter",
       text: {
-        en: ["Here you go. That's six euros in total.", "Here you are. It's six euros total."],
-        es: ["Aquí tienen. Son seis euros en total."],
+        en: ["Here you go. That's six euros in total.", "Here you are. It's six euros total.", "Here you go. That'll be six euros."],
+        es: ["Aquí tienen. Son seis euros en total.", "Aquí tienen. Son seis euros.", "Aquí está. Son seis euros en total."],
         fr: ["Voilà. Ça fait six euros en tout."],
         de: ["Bitte schön. Das macht insgesamt sechs Euro."],
         it: ["Ecco a voi. Sono sei euro in tutto."],
@@ -473,8 +475,8 @@ const CAFE_SCENE = {
     {
       speaker: "lucia",
       text: {
-        en: ["Thanks. Today it's on me.", "Thank you. My treat today."],
-        es: ["Gracias. Hoy invito yo."],
+        en: ["Thanks. Today it's on me.", "Thank you. My treat today.", "Thanks. I'm paying today.", "Thanks. Today I'll pay."],
+        es: ["Gracias. Hoy invito yo.", "Gracias. Hoy pago yo.", "Gracias. Hoy te invito yo."],
         fr: ["Merci. Aujourd'hui, c'est moi qui invite.", "Merci. C'est pour moi aujourd'hui."],
         de: ["Danke. Heute lade ich ein.", "Danke. Heute geht's auf mich."],
         it: ["Grazie. Oggi offro io."],
@@ -521,6 +523,6 @@ const CAFE_SCENE = {
 // romanized form. Romanized text has spaces, so it's always scored by word.
 function scoreLine(attempt, line, language) {
   const { altScript, byCharacter } = LANGUAGES[language];
-  const nativeScore = scoreTranslation(attempt, line.text[language], byCharacter);
+  const nativeScore = scoreTranslation(attempt, line.text[language], byCharacter, language);
   return altScript && line.text[altScript] ? Math.max(nativeScore, scoreTranslation(attempt, line.text[altScript])) : nativeScore;
 }

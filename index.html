@@ -131,6 +131,14 @@
             <legend>Reading speed</legend>
             <div id="speed-pills" class="option-pills"></div>
           </fieldset>
+          <label class="listen-option auto-play-option">
+            <input type="checkbox" id="auto-play" />
+            <span>Read each line aloud as it appears</span>
+          </label>
+          <label class="listen-option">
+            <input type="checkbox" id="sound-effects" checked />
+            <span>Sound effects (a chime for 5 stars or a new best)</span>
+          </label>
           <p id="play-status" class="play-status" aria-live="polite"></p>
         </div>
       </section>
@@ -151,15 +159,23 @@
         <div id="progress-bar" class="progress-bar" role="progressbar" aria-label="Lines finished" aria-valuemin="0">
           <span id="progress-fill"></span>
         </div>
+        <div id="auto-play-offer" class="auto-play-offer" hidden>
+          <p>🔊 Want each line read aloud as you go?</p>
+          <button type="button" id="auto-play-yes" class="primary">Yes, read aloud</button>
+          <button type="button" id="auto-play-no">No thanks</button>
+        </div>
         <ol id="dialogue" class="dialogue thread"></ol>
       </section>
 
       <section id="results" class="results" aria-labelledby="results-title" hidden>
         <div class="card results-hero">
           <h2 id="results-title" class="visually-hidden">Your results</h2>
+          <p id="result-celebration" class="result-celebration" hidden></p>
           <div id="result-stars" class="stars" role="img"></div>
           <p id="result-average" class="result-average"></p>
-          <p class="star-rule">★★★★★ 90%+ · ★★★★ 75%+ · ★★★ 60%+ · ★★ 40%+ · ★ finished. Skipped lines count as 0%.</p>
+          <p id="result-best" class="result-best"></p>
+          <p id="result-hint-note" class="hint-note" hidden></p>
+          <p class="star-rule">★★★★★ 90%+ with at most 1 hint · ★★★★ 75%+ · ★★★ 60%+ · ★★ 40%+ · ★ finished. Skipped lines count as 0%.</p>
         </div>
         <div class="stats">
           <div><b id="stat-checked"></b>checked</div>
@@ -191,6 +207,8 @@
     <script src="custom-scene.js"></script>
     <script src="ai-voices.js"></script>
     <script src="speak.js"></script>
+    <script src="ai-grader.js"></script>
+    <script src="celebrate.js"></script>
     <script src="practice.js"></script>
     <script src="app.js"></script>
   </body>

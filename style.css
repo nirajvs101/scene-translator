@@ -245,6 +245,33 @@ button:focus-visible {
 
 .scene-chip {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.scene-picker [data-scene-id] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* The scene's length, quieter than its name. */
+.scene-length {
+  font-size: 0.75rem;
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+/* Best stars for the chosen languages: small and soft, so they don't compete
+   with the scene names. */
+.scene-stars {
+  margin-top: 2px;
+  font-size: 0.8rem;
+  line-height: 1;
+  letter-spacing: 1px;
+  color: #d9a400;
+  opacity: 0.85;
 }
 
 button.scene-delete {
@@ -732,6 +759,11 @@ button.prompt-button.primary {
   gap: 8px;
 }
 
+.auto-play-option {
+  margin-top: 12px;
+}
+
+.auto-play-offer,
 .skip-all-confirm {
   margin: 0 0 12px;
   padding: 12px 14px;
@@ -740,10 +772,12 @@ button.prompt-button.primary {
   animation: card-enter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+.auto-play-offer p,
 .skip-all-confirm p {
   margin: 0 0 10px;
 }
 
+.auto-play-offer button,
 .skip-all-confirm button {
   margin: 0 8px 4px 0;
 }
@@ -837,12 +871,48 @@ button.prompt-button.primary {
 
 .card-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: 12px;
 }
 
 .card-actions .primary {
   flex: 1;
+}
+
+.hint {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  background: var(--background);
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  animation: card-enter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.hint strong {
+  font: 600 0.95rem var(--display-font);
+  letter-spacing: 0;
+  color: var(--accent-edge);
+}
+
+.hint-note {
+  margin: 4px 0;
+  font-size: 0.95rem;
+  color: var(--partial);
+}
+
+.result.checking {
+  color: var(--muted);
+  background: var(--background);
+  animation: checking 1.2s ease-in-out infinite;
+}
+
+@keyframes checking {
+  50% {
+    opacity: 0.55;
+  }
 }
 
 mark.missed {
@@ -947,6 +1017,39 @@ mark.missed {
   color: var(--accent-edge);
 }
 
+.result-celebration {
+  margin: 0 0 10px;
+  font: 600 1.6rem var(--display-font);
+  color: var(--accent-edge);
+  animation: celebrate 0.6s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* The calm stand-in for confetti when the device asks for less motion. */
+.glow {
+  animation: glow 1.6s ease-in-out;
+}
+
+@keyframes glow {
+  40% {
+    box-shadow: 0 0 0 6px #ffe48a, 0 0 28px 8px #ffe48a;
+  }
+}
+
+.result-best {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
 .star-rule {
   margin: 0;
   font-size: 0.85rem;
@@ -1042,9 +1145,13 @@ mark.missed {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .result-celebration,
+  .result.checking,
   .current-card.entering,
   .current-card.celebrate .result,
+  .hint,
   .skip-all-confirm,
+  .auto-play-offer,
   .star.earned,
   .results {
     animation: none;
