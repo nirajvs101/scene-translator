@@ -29,11 +29,15 @@ const QUESTION_WORDS = {
   ],
   hi: ["क्या", "कहाँ", "कहां", "कब", "क्यों", "कौन", "कैसे", "कैसा", "कैसी", "कितना", "कितने", "कितनी"],
   ml: ["എന്ത്", "എന്താ", "എന്താണ്", "എന്തുപറ്റി", "എവിടെ", "എപ്പോൾ", "എന്തുകൊണ്ട്", "ആര്", "ആരാണ്", "എങ്ങനെ", "എത്ര", "ഏത്"],
+  te: ["ఏమి", "ఏం", "ఏంటి", "ఏమైంది", "ఎక్కడ", "ఎక్కడికి", "ఎప్పుడు", "ఎందుకు", "ఎవరు", "ఎలా", "ఎంత", "ఏది"],
+  kn: ["ಏನು", "ಏನ್", "ಏನಾಯ್ತು", "ಎಲ್ಲಿ", "ಎಲ್ಲಿಗೆ", "ಯಾವಾಗ", "ಯಾಕೆ", "ಏಕೆ", "ಯಾರು", "ಹೇಗೆ", "ಎಷ್ಟು", "ಯಾವುದು"],
+  gu: ["શું", "ક્યાં", "ક્યારે", "કેમ", "કોણ", "કેવી", "કેવું", "કેટલું", "કેટલા", "કયું", "કઈ"],
 };
 
-// Hindi and Malayalam often put the question word mid-sentence ("आप क्या लेंगे"),
-// so any position counts there; other languages usually lead with it.
-const QUESTION_WORD_ANYWHERE = new Set(["hi", "ml"]);
+// Hindi, Malayalam, Telugu, Kannada, and Gujarati often put the question word
+// mid-sentence ("आप क्या लेंगे"), so any position counts there; other
+// languages usually lead with it.
+const QUESTION_WORD_ANYWHERE = new Set(["hi", "ml", "te", "kn", "gu"]);
 
 // Malayalam yes/no questions end in the vowel sign ോ (ഉണ്ടോ, പറ്റുമോ).
 const QUESTION_ENDING = { ml: "ോ" };

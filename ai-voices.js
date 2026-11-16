@@ -10,7 +10,8 @@ function piperVoice(path, sizeMb) {
 }
 
 // Japanese and Hebrew Piper voices need text converters that don't run in
-// the browser, and Tamil has no voice, so those three use the device's voices.
+// the browser, and Tamil, Kannada, and Gujarati have no Piper voice, so those
+// five use the device's voices.
 const AI_VOICES = {
   en: piperVoice("en/en_US/lessac/medium/en_US-lessac-medium.onnx", 63),
   es: piperVoice("es/es_ES/davefx/medium/es_ES-davefx-medium.onnx", 63),
@@ -32,6 +33,7 @@ const AI_VOICES = {
   pl: piperVoice("pl/pl_PL/gosia/medium/pl_PL-gosia-medium.onnx", 63),
   sw: piperVoice("sw/sw_CD/lanfrica/medium/sw_CD-lanfrica-medium.onnx", 63),
   ml: piperVoice("ml/ml_IN/meera/medium/ml_IN-meera-medium.onnx", 63),
+  te: piperVoice("te/te_IN/maya/medium/te_IN-maya-medium.onnx", 63),
   fa: piperVoice("fa/fa_IR/gyro/medium/fa_IR-gyro-medium.onnx", 63),
   el: piperVoice("el/el_GR/joy/medium/el_GR-joy-medium.onnx", 64),
   sv: piperVoice("sv/sv_SE/lisa/medium/sv_SE-lisa-medium.onnx", 64),
