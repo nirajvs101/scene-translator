@@ -1,5 +1,8 @@
 :root {
   --background: #eaf3fd;
+  /* The page behind the cards, a shade darker so the light greetings show. */
+  --page-background: #cde2f7;
+  --greeting: #eef6fe;
   --card: #ffffff;
   --text: #0f2a44;
   --muted: #4f6178;
@@ -25,9 +28,36 @@
 
 body {
   margin: 0;
-  background: var(--background);
+  background: var(--page-background);
   color: var(--text);
   font: 17px/1.5 var(--body-font);
+}
+
+/* "Hello" in every language, tilted behind everything (greeting-wall.js). */
+.greeting-wall {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.greeting-wall-words {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 150vmax;
+  height: 150vmax;
+  transform: translate(-50%, -50%) rotate(-18deg);
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 6px 22px;
+  color: var(--greeting);
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .top-bar {
@@ -51,9 +81,14 @@ main {
   font: 600 1.6rem/1.2 var(--display-font);
 }
 
+/* A white bubble, like the cards, so it reads clearly over the greeting wall. */
 .tagline {
-  margin: 20px 4px 0;
+  margin: 20px 0 0;
+  padding: 12px 18px;
   font-size: 1.05rem;
+  background: var(--card);
+  border-radius: 20px;
+  box-shadow: 0 3px 0 var(--border);
 }
 
 .scene-info {
@@ -768,7 +803,9 @@ button.prompt-button.primary {
   margin: 0 0 12px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: var(--accent-soft);
+  /* White, so it stands out from the page behind it. */
+  background: var(--card);
+  box-shadow: 0 3px 0 var(--border);
   animation: card-enter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
