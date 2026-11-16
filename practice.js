@@ -622,7 +622,7 @@ function autoPlayCurrentLine() {
 }
 
 // Auto-play starts off. The first time, a banner asks; the answer is
-// remembered, and the switch by Reading speed changes it later.
+// remembered, and its switch in Listening settings changes it later.
 function setUpAutoPlay() {
   const toggle = document.getElementById("auto-play");
   const offer = document.getElementById("auto-play-offer");

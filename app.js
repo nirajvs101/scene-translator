@@ -339,6 +339,18 @@ function loadSpeechRate() {
   }
 }
 
+// Listening settings (speed and the switches) open and close under a ⚙️
+// button, so the card shows only Play scene until someone wants them.
+function setUpListenSettings() {
+  const button = document.getElementById("listen-settings-button");
+  const panel = document.getElementById("listen-settings");
+  button.addEventListener("click", () => {
+    const open = panel.hidden;
+    panel.hidden = !open;
+    button.setAttribute("aria-expanded", String(open));
+  });
+}
+
 function renderSpeedPills() {
   const chosen = loadSpeechRate();
   setSpeechRate(chosen);
@@ -360,7 +372,7 @@ function renderSpeedPills() {
       }
     });
     const text = document.createElement("span");
-    text.textContent = rate === 1 ? "Normal" : `${rate}×`;
+    text.textContent = `${rate}×`;
     label.append(radio, text);
     pills.appendChild(label);
   }
@@ -403,7 +415,7 @@ function showScene(notice = "") {
   document.getElementById("scene-description").textContent = scene.description;
   document.getElementById("play-status").textContent = "";
   document.getElementById("play-translations-label").textContent =
-    `Also read the ${languageName(toLanguage)} translation after each line`;
+    `Read the ${languageName(toLanguage)} after each line`;
   document.getElementById("custom-languages").textContent =
     `It will be in ${languageName(fromLanguage)} and ${languageName(toLanguage)}. To use others, change From and To below first.`;
   markChosenScene();
@@ -689,6 +701,7 @@ document.getElementById("play-scene").addEventListener("click", () => {
   }
 });
 renderSpeedPills();
+setUpListenSettings();
 setUpAutoPlay();
 setUpSoundEffects();
 renderScenePicker();
