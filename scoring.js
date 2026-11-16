@@ -22,7 +22,9 @@ const EQUIVALENT_WORDS = {
 // equivalent words.
 function normalizeText(text, byCharacter = false, language = null) {
   const words = text
-    .normalize("NFD")
+    // NFKD also turns look-alike forms into plain letters, such as the
+    // full-width letters a Japanese or Chinese keyboard types (Ｇｏｏｄ → Good).
+    .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "") // strip Latin and Greek accent marks (é → e, ñ → n, ά → α)
     .replace(/[\u064b-\u0655]/g, "") // strip optional Arabic vowel and hamza marks (أ → ا)
     .replace(/\u200c/g, "") // join Persian half-spaced words (می‌خوام → میخوام)

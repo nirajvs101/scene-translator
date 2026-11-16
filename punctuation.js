@@ -59,7 +59,8 @@ function punctuateSpeech(text, language) {
   if (trimmed === "") {
     return "";
   }
-  const capitalized = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  // Capitalize the first letter, even after an opening ¿ or ¡.
+  const capitalized = trimmed.replace(/^([¿¡"«“]*)(.)/u, (match, opening, first) => opening + first.toUpperCase());
   if (/[.!?।۔。？！؟;]$/.test(trimmed)) {
     return capitalized;
   }
