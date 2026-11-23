@@ -399,6 +399,7 @@ function setLanguages(newFrom, newTo) {
   toLanguage = newTo;
   fromPicker.setValue(fromLanguage);
   toPicker.setValue(toLanguage);
+  showWordOfTheDay(fromLanguage, toLanguage);
   let notice = "";
   if (!sceneHasLanguages(scene, fromLanguage, toLanguage)) {
     const [first, second] = scene.languages.map(languageName);

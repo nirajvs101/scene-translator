@@ -91,6 +91,52 @@ main {
   box-shadow: 0 3px 0 var(--border);
 }
 
+/* A small centered card: short text looks lost when left-aligned. */
+.word-of-the-day {
+  max-width: 360px;
+  margin: 12px auto 0;
+  padding: 10px 18px 12px;
+  text-align: center;
+  background: var(--card);
+  border-radius: 20px;
+  box-shadow: 0 3px 0 var(--border);
+}
+
+.word-of-the-day h2 {
+  margin: 0;
+  font: 600 0.75rem/1.3 var(--display-font);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.daily-word-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 2px 0 0;
+}
+
+.daily-word-means {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.daily-word {
+  font: 600 1.4rem/1.2 var(--display-font);
+  color: var(--accent-edge);
+}
+
+.daily-word-romanized {
+  color: var(--muted);
+}
+
+.daily-word-meaning {
+  font-weight: 700;
+}
+
 .scene-info {
   margin: 16px 0 20px;
 }

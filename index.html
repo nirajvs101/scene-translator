@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="style.css?v=0831891e" />
+    <link rel="stylesheet" href="style.css?v=6d220190" />
   </head>
   <body>
     <header class="top-bar">
@@ -16,6 +16,14 @@
 
     <main>
       <p class="tagline">Jump into a conversation, translate each line, and see how close you get.</p>
+      <section class="word-of-the-day" aria-labelledby="word-of-the-day-title">
+        <h2 id="word-of-the-day-title">📅 Word of the day</h2>
+        <p class="daily-word-line">
+          <bdi id="daily-word" class="daily-word"></bdi>
+          <span id="daily-word-romanized" class="daily-word-romanized"></span>
+        </p>
+        <p class="daily-word-means">means <bdi id="daily-word-meaning" class="daily-word-meaning"></bdi></p>
+      </section>
       <section class="scene-info">
         <div class="scene-choice card">
           <span id="scene-picker-label" class="scene-picker-label">Pick a scene</span>
@@ -224,8 +232,9 @@
     <script src="speak.js?v=7a1449b4"></script>
     <script src="ai-grader.js?v=63b75eda"></script>
     <script src="greeting-wall.js?v=318cf35c"></script>
+    <script src="word-of-the-day.js?v=9203e7b1"></script>
     <script src="celebrate.js?v=2b96e805"></script>
     <script src="practice.js?v=22925bca"></script>
-    <script src="app.js?v=475ed7b3"></script>
+    <script src="app.js?v=da391c23"></script>
   </body>
 </html>
