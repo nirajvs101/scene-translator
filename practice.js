@@ -16,13 +16,22 @@ const WEAK_LINES_SHOWN = 3;
 // Progress per scene and language pair, like the answers, so switching
 // scenes or languages and coming back picks up where you left off.
 // results[i] is { status: "trying" | "checked" | "skipped", score, checks },
-// and hints[i] is how many hints line i has shown.
+// hints[i] is how many hints line i has shown, and revealed[i] is whether a
+// clip line's words were shown (which counts as a hint).
 const runsByPair = {};
+
+function newRun() {
+  return { index: 0, results: [], hints: [], revealed: [] };
+}
 
 function currentRun() {
   const key = answersKey();
-  runsByPair[key] = runsByPair[key] || { index: 0, results: [], hints: [] };
+  runsByPair[key] = runsByPair[key] || newRun();
   return runsByPair[key];
+}
+
+function hintsUsedIn(run) {
+  return run.hints.reduce((sum, count) => sum + (count || 0), 0) + run.revealed.filter(Boolean).length;
 }
 
 function isFinished(result) {
@@ -230,7 +239,10 @@ function appendGradeNote(container, result) {
   } else if (result.aiUnavailable) {
     const note = document.createElement("span");
     note.className = "ai-feedback";
-    note.textContent = "(AI check unavailable, scored by matching words.) ";
+    note.textContent =
+      result.status === "trying"
+        ? "🤖 The AI was busy, so this was scored by matching words, which misses rewordings. Press Check again to ask the AI. "
+        : "🤖 The AI was busy, so this was scored by matching words, which misses rewordings. ";
     container.append(note);
   }
 }
@@ -408,8 +420,83 @@ function renderCurrentCard(line, index, run) {
     }
   });
 
-  item.append(name, renderOriginal(line, status), answerRow, hint, status, feedback, actions);
+  const original = scene.video ? renderClipControls(line, index, run) : renderOriginal(line, status);
+  item.append(name, original, answerRow, hint, status, feedback, actions);
   return item;
+}
+
+function setClipCue(text) {
+  const cue = currentCard() && currentCard().querySelector(".clip-cue");
+  if (cue) {
+    cue.textContent = text;
+  }
+}
+
+// Plays a clip line in the video. With the lead-in, the short lines before it
+// ("okay", "yes") play first, and the cue says when the line to translate starts.
+function playClipLine(line, { withLeadIn }) {
+  const from = withLeadIn ? line.playFrom : line.start;
+  const speakerName = scene.speakers[line.speaker].name;
+  setClipCue(from < line.start ? "👂 Listen…" : "");
+  playClipSegment({
+    from,
+    to: line.end,
+    turnAt: line.start,
+    onTurn: () => setClipCue(`🎯 ${speakerName}: translate this line`),
+    onDone: (outcome) => setClipCue(outcome === "done" ? `↻ Replay to hear ${speakerName} again.` : ""),
+  });
+}
+
+function renderClipOriginal(line) {
+  const { main, alt } = lineText(line, fromLanguage);
+  const texts = document.createElement("div");
+  texts.className = "original-text";
+  const mainText = document.createElement("p");
+  mainText.lang = fromLanguage;
+  mainText.dir = "auto";
+  mainText.textContent = main;
+  texts.append(mainText);
+  if (alt) {
+    const romanized = document.createElement("p");
+    romanized.className = "romanized";
+    romanized.textContent = alt;
+    texts.append(romanized);
+  }
+  return texts;
+}
+
+// A clip line is heard, not read: ↻ replays it, and its words show only when
+// asked for (which counts as a hint) or once the line is finished.
+function renderClipControls(line, index, run) {
+  const box = document.createElement("div");
+  box.className = "original clip-controls";
+  const buttons = document.createElement("div");
+  buttons.className = "clip-buttons";
+  const replay = actionButton("↻ Replay", () => playClipLine(line, { withLeadIn: false }));
+  replay.title = `Hear ${scene.speakers[line.speaker].name}'s line again`;
+  buttons.append(replay);
+  if (line.playFrom < line.start) {
+    const withBefore = actionButton("⏮ With what came before", () => playClipLine(line, { withLeadIn: true }));
+    withBefore.title = "Also play the short lines just before it";
+    buttons.append(withBefore);
+  }
+  const cue = document.createElement("p");
+  cue.className = "clip-cue";
+  cue.setAttribute("aria-live", "polite");
+  box.append(buttons, cue);
+
+  if (run.revealed[index] || isFinished(run.results[index])) {
+    box.append(renderClipOriginal(line));
+  } else {
+    const show = actionButton("👁 Show what they said", () => {
+      run.revealed[index] = true;
+      refreshCurrentCard({ focus: "answer" });
+    });
+    show.classList.add("clip-show");
+    show.title = "Shows the words; counts as a hint toward your stars";
+    buttons.append(show);
+  }
+  return box;
 }
 
 function renderProgress(run) {
@@ -427,6 +514,7 @@ function renderDialogue() {
   stopListening();
   stopScenePlayback();
   stopSpeaking();
+  stopClipPlayback();
   const run = currentRun();
   const answers = currentAnswers();
   const list = document.getElementById("dialogue");
@@ -434,13 +522,21 @@ function renderDialogue() {
   renderProgress(run);
 
   const lastShown = Math.min(run.index, scene.lines.length);
+  const pastLines = [];
   for (let index = 0; index < lastShown; index++) {
-    list.appendChild(renderPastLine(scene.lines[index], index, run.results[index], answers[index] || ""));
+    pastLines.push(renderPastLine(scene.lines[index], index, run.results[index], answers[index] || ""));
   }
   const allDone = run.index >= scene.lines.length;
-  if (!allDone) {
-    list.appendChild(renderCurrentCard(scene.lines[run.index], run.index, run));
+  const current = allDone ? [] : [renderCurrentCard(scene.lines[run.index], run.index, run)];
+  // A clip's line is heard in its video, so the line being translated sits
+  // right under the video with finished ones below it, newest first, and the
+  // video never scrolls away. Other scenes read top to bottom like a chat.
+  if (scene.video) {
+    list.append(...current, ...pastLines.reverse());
+  } else {
+    list.append(...pastLines, ...current);
   }
+  list.classList.toggle("newest-first", Boolean(scene.video));
   document.getElementById("results").hidden = !allDone;
   document.getElementById("skip-all-button").hidden = allDone;
   closeSkipAllConfirm();
@@ -527,7 +623,10 @@ async function checkCurrentLine(input, status) {
       grading = { gradedBy: grading.gradedBy, naturalWay, literal: true };
     }
   }
-  const checks = (run.results[index] ? run.results[index].checks : 0) + 1;
+  // A check the AI couldn't grade doesn't count, so a busy moment never
+  // locks in a word-matching score that misses a good rewording.
+  const previousChecks = run.results[index] ? run.results[index].checks : 0;
+  const checks = grading.aiUnavailable ? previousChecks : previousChecks + 1;
   const done = score >= GREAT_SCORE || checks >= MAX_CHECKS;
   run.results[index] = { status: done ? "checked" : "trying", score, checks, ...grading };
   refreshCurrentCard({ focus: done ? "next" : "answer" });
@@ -576,7 +675,10 @@ async function goToNextLine() {
     if (!animated && !prefersReducedMotion.matches) {
       next.classList.add("entering");
     }
-    next.scrollIntoView({ behavior: prefersReducedMotion.matches ? "auto" : "smooth", block: "nearest" });
+    const behavior = prefersReducedMotion.matches ? "auto" : "smooth";
+    // In a clip, keep the video in view: the new card is right under it.
+    const showFrom = scene.video ? document.getElementById("clip-video") : next;
+    showFrom.scrollIntoView({ behavior, block: scene.video ? "start" : "nearest" });
     next.querySelector("textarea").focus({ preventScroll: true });
     autoPlayCurrentLine();
   } else {
@@ -604,14 +706,22 @@ function saveAutoPlayChoice(isOn) {
   }
 }
 
-// Reads the current card's line, just as if its 🔊 were pressed. Browsers
-// only allow sound once the person has clicked something on the page, so
-// before that this does nothing.
+// Reads the current card's line, just as if its 🔊 were pressed; a clip line
+// always plays (with the short lines before it), since it's only heard.
+// Browsers only allow sound once the person has clicked something on the
+// page, so before that this does nothing.
 function autoPlayCurrentLine() {
-  if (!document.getElementById("auto-play").checked) {
+  if (navigator.userActivation && !navigator.userActivation.hasBeenActive) {
     return;
   }
-  if (navigator.userActivation && !navigator.userActivation.hasBeenActive) {
+  if (scene.video) {
+    const run = currentRun();
+    if (run.index < scene.lines.length && !isFinished(run.results[run.index])) {
+      playClipLine(scene.lines[run.index], { withLeadIn: true });
+    }
+    return;
+  }
+  if (!document.getElementById("auto-play").checked) {
     return;
   }
   const card = currentCard();
@@ -678,7 +788,7 @@ async function skipToResults() {
 
 function resetRun() {
   answersByPair[answersKey()] = [];
-  runsByPair[answersKey()] = { index: 0, results: [], hints: [] };
+  runsByPair[answersKey()] = newRun();
   animateChange(renderDialogue).then(autoPlayCurrentLine);
 }
 
@@ -858,7 +968,7 @@ function celebrateResultsIfEarned() {
 function renderResults(run) {
   const total = scene.lines.length;
   const average = run.results.reduce((sum, result) => sum + result.score, 0) / total;
-  const hintsUsed = run.hints.reduce((sum, count) => sum + (count || 0), 0);
+  const hintsUsed = hintsUsedIn(run);
   const stars = starsFor(average, hintsUsed);
   renderStars(stars);
   renderBestStars(run, stars);

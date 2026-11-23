@@ -518,6 +518,47 @@ button.primary:hover {
   border-color: transparent;
 }
 
+/* ---- Importing a YouTube clip ---- */
+
+.clip-link,
+.clip-times input {
+  padding: 8px 14px;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  font: inherit;
+}
+
+.clip-link {
+  width: 100%;
+}
+
+.clip-link:focus,
+.clip-times input:focus {
+  outline: 2px solid var(--accent);
+  border-color: transparent;
+}
+
+.clip-times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.clip-times label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.clip-times input {
+  width: 6.5em;
+}
+
+#clip-import {
+  margin-top: 12px;
+}
+
 .custom-hint,
 .custom-error {
   margin: 6px 0 0;
@@ -930,6 +971,73 @@ button.prompt-button.primary {
 
 .practice {
   margin-bottom: 40px;
+}
+
+/* A clip's video sits above the lines. On wider screens it stays in view
+   while scrolling; on phones it scrolls away so the answer box has room
+   (the sound keeps playing). */
+.clip-video {
+  margin-bottom: 14px;
+  padding: 8px;
+  background: var(--card);
+  border-radius: 20px;
+  box-shadow: 0 3px 0 var(--border);
+}
+
+/* At most 42% of the screen's height, so the card fits under it. */
+.clip-frame {
+  width: min(100%, calc(42vh * 16 / 9));
+  margin: 0 auto;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #000;
+}
+
+.clip-frame iframe,
+#clip-player {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.clip-video-message:empty {
+  display: none;
+}
+
+.clip-video-message {
+  margin: 8px 6px 2px;
+  color: var(--muted);
+}
+
+@media (min-width: 700px) and (min-height: 700px) {
+  .clip-video {
+    position: sticky;
+    top: 8px;
+    z-index: 5;
+  }
+}
+
+.clip-controls {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.clip-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.clip-cue {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.clip-cue:empty {
+  display: none;
 }
 
 .progress-row {

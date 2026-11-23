@@ -6,7 +6,9 @@
 
 const aiGraderSettings = {
   url: "https://scene-grader.niraj-vs.workers.dev",
-  strongModel: "gemini-3.6-flash",
+  // Free-tier requests are turned away (503) when Google is busy; this one
+  // says so within a few seconds, so the fast one's grade isn't held up.
+  strongModel: "gemini-3.8-flash",
   fastModel: "gemini-3.5-flash-lite",
   // How long to wait for any grade before falling back to word matching.
   waitMs: 5000,
@@ -68,16 +70,28 @@ async function askGrader(request, model, signal) {
   }
 }
 
+// Free-tier requests are often turned away for a moment when Google is
+// busy, so if both models say no quickly, the fast one is asked once more
+// as long as at least this much of the wait is left.
+const RETRY_IF_LEFT_MS = 2000;
+const RETRY_PAUSE_MS = 500;
+
 // The best grade available within the wait, or null.
 async function gradeWithAi(request) {
   const controller = new AbortController();
   const deadline = Date.now() + aiGraderSettings.waitMs;
+  const timeLeft = () => Math.max(0, deadline - Date.now());
   const strong = askGrader(request, aiGraderSettings.strongModel, controller.signal);
   const fast = askGrader(request, aiGraderSettings.fastModel, controller.signal);
   const strongGrade = await Promise.race([strong, wait(aiGraderSettings.waitMs)]);
   let grade = strongGrade || null;
   if (!grade) {
-    grade = (await Promise.race([fast, wait(Math.max(0, deadline - Date.now()))])) || null;
+    grade = (await Promise.race([fast, wait(timeLeft())])) || null;
+  }
+  if (!grade && timeLeft() >= RETRY_IF_LEFT_MS) {
+    await wait(RETRY_PAUSE_MS);
+    const retry = askGrader(request, aiGraderSettings.fastModel, controller.signal);
+    grade = (await Promise.race([retry, wait(timeLeft())])) || null;
   }
   controller.abort();
   return grade;

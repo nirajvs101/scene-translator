@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="style.css?v=52e31b6b" />
+    <link rel="stylesheet" href="style.css?v=0e3fe8eb" />
   </head>
   <body>
     <header class="top-bar">
@@ -119,6 +119,30 @@
               </div>
             </div>
           </div>
+          <button type="button" id="clip-open" class="custom-open" aria-expanded="false" aria-controls="clip-panel">
+            ▶ Import from YouTube
+          </button>
+          <div id="clip-panel" class="custom-panel" hidden>
+            <label class="custom-step" for="clip-link">1. Paste a YouTube link</label>
+            <input type="url" id="clip-link" class="clip-link" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off" />
+            <p class="custom-step">2. Which part? (up to 5 minutes)</p>
+            <div class="clip-times">
+              <label>From <input type="text" id="clip-start" inputmode="numeric" placeholder="1:00" autocomplete="off" /></label>
+              <label>To <input type="text" id="clip-end" inputmode="numeric" placeholder="3:00" autocomplete="off" /></label>
+            </div>
+            <p id="clip-languages" class="custom-hint"></p>
+            <button type="button" id="clip-import" class="primary">Import clip</button>
+            <p id="clip-message" class="custom-hint" role="status"></p>
+            <div id="clip-preview" class="custom-preview" hidden>
+              <p class="custom-step">3. Is this the scene you wanted?</p>
+              <p id="clip-preview-title" class="custom-preview-title"></p>
+              <p id="clip-preview-summary" class="custom-hint"></p>
+              <div class="custom-preview-actions">
+                <button type="button" id="clip-confirm" class="primary">Add this scene</button>
+                <button type="button" id="clip-cancel">Not this one</button>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="card">
           <p id="scene-notice" class="scene-notice" aria-live="polite"></p>
@@ -160,6 +184,10 @@
       </section>
 
       <section class="practice" aria-label="Translate the scene">
+        <div id="clip-video" class="clip-video" hidden>
+          <div class="clip-frame"><div id="clip-player"></div></div>
+          <p id="clip-video-message" class="clip-video-message" role="status"></p>
+        </div>
         <div class="progress-row">
           <span id="progress-label" class="progress-label"></span>
           <div class="progress-actions">
@@ -230,13 +258,14 @@
     <script src="language-picker.js?v=31193603"></script>
     <script src="scene-search.js?v=3e889582"></script>
     <script src="custom-scene.js?v=88e244ae"></script>
+    <script src="clip-scene.js?v=97713f20"></script>
     <script src="ai-voices.js?v=d98d6ba9"></script>
     <script src="speak.js?v=7a1449b4"></script>
-    <script src="ai-grader.js?v=63b75eda"></script>
+    <script src="ai-grader.js?v=a09e4f4c"></script>
     <script src="greeting-wall.js?v=318cf35c"></script>
     <script src="word-of-the-day.js?v=8802265b"></script>
     <script src="celebrate.js?v=2b96e805"></script>
-    <script src="practice.js?v=22925bca"></script>
-    <script src="app.js?v=7d8da10f"></script>
+    <script src="practice.js?v=c55841f1"></script>
+    <script src="app.js?v=528fcda6"></script>
   </body>
 </html>

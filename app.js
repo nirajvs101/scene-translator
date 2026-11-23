@@ -428,8 +428,12 @@ const toPicker = createLanguagePicker(document.getElementById("to-picker"), "To"
   setLanguages(fromLanguage, code),
 );
 
-// Built-in scenes have every language; custom scenes only list their two.
+// Built-in scenes have every language; custom scenes only list their two. A
+// clip's audio is in its first language, so it only works in that direction.
 function sceneHasLanguages(candidate, ...languages) {
+  if (candidate.video) {
+    return languages[0] === candidate.languages[0] && languages[1] === candidate.languages[1];
+  }
   return !candidate.languages || languages.every((language) => candidate.languages.includes(language));
 }
 
@@ -446,7 +450,9 @@ function setLanguages(newFrom, newTo) {
   let notice = "";
   if (!sceneHasLanguages(scene, fromLanguage, toLanguage)) {
     const [first, second] = scene.languages.map(languageName);
-    notice = `"${scene.title.en}" is only in ${first} and ${second}, so here's a built-in scene. Yours is still in the list.`;
+    notice = scene.video
+      ? `"${scene.title.en}" is a ${first} video to translate into ${second}, so here's a built-in scene. Yours is still in the list.`
+      : `"${scene.title.en}" is only in ${first} and ${second}, so here's a built-in scene. Yours is still in the list.`;
     scene = SCENES[0];
   }
   showScene(notice);
@@ -462,6 +468,11 @@ function showScene(notice = "") {
     `Read the ${languageName(toLanguage)} after each line`;
   document.getElementById("custom-languages").textContent =
     `It will be in ${languageName(fromLanguage)} and ${languageName(toLanguage)}. To use others, change From and To below first.`;
+  document.getElementById("clip-languages").textContent =
+    `The video should be in ${languageName(fromLanguage)}, and you'll translate it into ${languageName(toLanguage)}. To use others, change From and To below first.`;
+  showClipVideo(scene.video);
+  // A clip is heard in the video, so the offer to read lines aloud doesn't apply.
+  document.getElementById("auto-play-offer").hidden = Boolean(scene.video) || loadAutoPlayChoice() !== null;
   markChosenScene();
   updateSceneStars();
   renderLegend();
@@ -685,6 +696,103 @@ function addPendingScene() {
     : "Your scene is ready, but this browser couldn't save it, so it will be gone when you close the page.";
 }
 
+let pendingClip = null;
+
+function setClipPanelOpen(isOpen) {
+  document.getElementById("clip-panel").hidden = !isOpen;
+  document.getElementById("clip-open").setAttribute("aria-expanded", String(isOpen));
+}
+
+function renderClipPreview(preview) {
+  const speakerNames = Object.values(preview.speakers).map((speaker) => speaker.name);
+  const count = preview.lines.length;
+  const watchOnly = preview.watchOnlyCount
+    ? ` Another ${preview.watchOnlyCount} short ${preview.watchOnlyCount === 1 ? "line" : "lines"} (like "okay") just play.`
+    : "";
+  document.getElementById("clip-preview-title").textContent = preview.title.en;
+  document.getElementById("clip-preview-summary").textContent =
+    `${count} ${count === 1 ? "line" : "lines"} to translate from ${languageName(preview.languages[0])} into ${languageName(preview.languages[1])}, with ${speakerNames.join(", ")}.${watchOnly}`;
+  document.getElementById("clip-preview").hidden = false;
+  document.getElementById("clip-confirm").focus();
+}
+
+// Asks the server to watch the clip. Nothing is saved until the learner
+// confirms the preview.
+async function startClipImport() {
+  const importButton = document.getElementById("clip-import");
+  const message = document.getElementById("clip-message");
+  document.getElementById("clip-preview").hidden = true;
+  pendingClip = null;
+  let request;
+  try {
+    request = clipImportRequest(
+      document.getElementById("clip-link").value,
+      document.getElementById("clip-start").value,
+      document.getElementById("clip-end").value,
+      fromLanguage,
+      toLanguage,
+    );
+  } catch (error) {
+    message.textContent = error.message;
+    return;
+  }
+  const [importFrom, importTo] = [fromLanguage, toLanguage];
+  importButton.disabled = true;
+  const watchingMessage = "⏳ Watching the clip and writing down who says what. This takes a minute or two…";
+  message.textContent = watchingMessage;
+  try {
+    const result = await importClipWithRetries(request, (seconds) => {
+      message.textContent = `⏳ Google's AI is busy, so trying again in ${seconds} seconds…`;
+      setTimeout(() => {
+        message.textContent = watchingMessage;
+      }, seconds * 1000);
+    });
+    pendingClip = clipSceneFromImport(result, request, importFrom, importTo);
+    message.textContent = "";
+    renderClipPreview(pendingClip);
+  } catch (error) {
+    message.textContent = error.message;
+  } finally {
+    importButton.disabled = false;
+  }
+}
+
+function cancelPendingClip() {
+  pendingClip = null;
+  document.getElementById("clip-preview").hidden = true;
+  document.getElementById("clip-message").textContent = "Nothing was added. Try another part or another video.";
+}
+
+function addPendingClip() {
+  const newScene = pendingClip;
+  pendingClip = null;
+  SCENES.push(newScene);
+  const saved = saveCustomScenes(SCENES.filter((option) => option.languages));
+  document.getElementById("clip-preview").hidden = true;
+  document.getElementById("clip-message").textContent = "";
+  for (const id of ["clip-link", "clip-start", "clip-end"]) {
+    document.getElementById(id).value = "";
+  }
+  document.getElementById("scene-search").value = "";
+  setClipPanelOpen(false);
+  renderScenePicker();
+  scene = newScene;
+  setLanguages(...newScene.languages);
+  document.getElementById("scene-notice").textContent = saved
+    ? "Your clip is ready, and saved in this browser. Listen, then translate each line."
+    : "Your clip is ready, but this browser couldn't save it, so it will be gone when you close the page.";
+}
+
+// Play scene plays the whole clip in the video.
+function toggleWholeClip() {
+  if (isClipPlaying()) {
+    stopClipPlayback();
+    return;
+  }
+  setPlayButton(true);
+  playClipSegment({ from: scene.video.start, to: scene.video.end, onDone: () => setPlayButton(false) });
+}
+
 function askToDeleteScene(option) {
   sceneToDelete = option;
   document.getElementById("remove-confirm-message").textContent =
@@ -727,6 +835,12 @@ document.getElementById("custom-open").addEventListener("click", () => {
 document.getElementById("custom-reply").addEventListener("paste", () => setTimeout(previewPastedScene));
 document.getElementById("custom-confirm").addEventListener("click", addPendingScene);
 document.getElementById("custom-cancel").addEventListener("click", cancelPendingScene);
+document.getElementById("clip-open").addEventListener("click", () => {
+  setClipPanelOpen(document.getElementById("clip-panel").hidden);
+});
+document.getElementById("clip-import").addEventListener("click", startClipImport);
+document.getElementById("clip-confirm").addEventListener("click", addPendingClip);
+document.getElementById("clip-cancel").addEventListener("click", cancelPendingClip);
 document.getElementById("remove-no").addEventListener("click", keepSceneToDelete);
 document.getElementById("remove-yes").addEventListener("click", deleteChosenScene);
 document.getElementById("swap-button").addEventListener("click", () => setLanguages(toLanguage, fromLanguage));
@@ -738,7 +852,9 @@ document.getElementById("play-again").addEventListener("click", resetRun);
 document.getElementById("pick-another").addEventListener("click", pickAnotherScene);
 document.getElementById("scene-search").addEventListener("input", renderScenePicker);
 document.getElementById("play-scene").addEventListener("click", () => {
-  if (scenePlayback) {
+  if (scene.video) {
+    toggleWholeClip();
+  } else if (scenePlayback) {
     stopScenePlayback();
   } else {
     playScene();
