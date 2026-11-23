@@ -137,6 +137,16 @@ main {
   font-weight: 700;
 }
 
+.daily-word-status {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.daily-word-status:empty {
+  display: none;
+}
+
 .scene-info {
   margin: 16px 0 20px;
 }

@@ -131,7 +131,26 @@ function wordParts(entry, language) {
   return Array.isArray(value) ? { word: value[0], romanized: value[1] } : { word: value, romanized: "" };
 }
 
+// What 🔊 reads, matching the card: the word, then "means" and the meaning,
+// each in its own language's voice. "means" is English, so when the meaning
+// isn't English it's read by an English voice before the meaning.
+function wordOfTheDayReading(from, to, date) {
+  const entry = dailyWordFor(date);
+  const { wordLanguage, meaningLanguage } = wordOfTheDayLanguages(from, to);
+  const word = { text: wordParts(entry, wordLanguage).word, language: wordLanguage };
+  const meaning = wordParts(entry, meaningLanguage).word;
+  if (meaningLanguage === "en") {
+    return [word, { text: `means ${meaning}`, language: "en" }];
+  }
+  return [word, { text: "means", language: "en" }, { text: meaning, language: meaningLanguage }];
+}
+
+// The day the card is showing, so 🔊 reads the same word even if the page
+// stays open past midnight.
+let shownWordDate = new Date();
+
 function showWordOfTheDay(from, to, date = new Date()) {
+  shownWordDate = date;
   const entry = dailyWordFor(date);
   const { wordLanguage, meaningLanguage } = wordOfTheDayLanguages(from, to);
   const { word, romanized } = wordParts(entry, wordLanguage);

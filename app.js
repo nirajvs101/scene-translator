@@ -327,6 +327,49 @@ async function playScene() {
   }
 }
 
+// Reads the word of the day the way the card shows it, with the same voices
+// and reading speed as the scene. Voices are chosen (and any download asked
+// about) before anything plays, as in Play scene.
+async function readWordOfTheDay(status) {
+  const token = beginSpeech();
+  const parts = wordOfTheDayReading(fromLanguage, toLanguage, shownWordDate);
+  const choices = {};
+  for (const { language } of parts) {
+    choices[language] ??= await chooseVoice(language, status, token);
+    if (!choices[language]) {
+      return;
+    }
+  }
+  for (const part of parts) {
+    const choice = choices[part.language];
+    const outcome = await speakPrepared(choice, prepareSpeech(choice, part.text, status), part.text, status, token);
+    if (outcome === "fell-back") {
+      status.textContent = speakOutcomeMessage(outcome, part.language);
+      choices[part.language] = { kind: "device", language: part.language };
+    } else if (outcome !== "done") {
+      status.textContent = speakOutcomeMessage(outcome, part.language);
+      return;
+    }
+  }
+}
+
+function setUpWordOfTheDaySpeech() {
+  const button = document.getElementById("daily-word-speak");
+  const status = document.getElementById("daily-word-status");
+  button.addEventListener("click", async () => {
+    if (button.classList.contains("speaking")) {
+      stopSpeaking();
+      return;
+    }
+    stopScenePlayback();
+    stopListening();
+    status.textContent = "";
+    button.classList.add("speaking");
+    await readWordOfTheDay(status);
+    button.classList.remove("speaking");
+  });
+}
+
 const SPEECH_RATE_KEY = "scene-translator-speech-rate";
 
 // Remembers the chosen speed in this browser; private windows may refuse.
@@ -705,5 +748,6 @@ renderSpeedPills();
 setUpListenSettings();
 setUpAutoPlay();
 setUpSoundEffects();
+setUpWordOfTheDaySpeech();
 renderScenePicker();
 setLanguages(fromLanguage, toLanguage);
