@@ -91,6 +91,46 @@ main {
   box-shadow: 0 3px 0 var(--border);
 }
 
+/* The daily streak: a small pill, centered above the word of the day. */
+.streak {
+  width: fit-content;
+  max-width: 100%;
+  margin: 12px auto 0;
+  padding: 5px 14px;
+  font: 600 0.95rem/1.3 var(--display-font);
+  text-align: center;
+  color: var(--accent-edge);
+  background: var(--card);
+  border-radius: 999px;
+  box-shadow: 0 3px 0 var(--border);
+}
+
+.streak:empty {
+  display: none;
+}
+
+/* Yesterday's streak, not yet kept going today: a nudge, not a cheer. */
+.streak.streak-waiting {
+  color: var(--partial);
+  background: var(--partial-bg);
+}
+
+.streak.streak-grew {
+  animation: streak-pop 0.6s ease-out;
+}
+
+@keyframes streak-pop {
+  40% {
+    transform: scale(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streak.streak-grew {
+    animation: none;
+  }
+}
+
 /* A small centered card: short text looks lost when left-aligned. */
 .word-of-the-day {
   max-width: 360px;

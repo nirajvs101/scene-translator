@@ -865,5 +865,6 @@ setUpListenSettings();
 setUpAutoPlay();
 setUpSoundEffects();
 setUpWordOfTheDaySpeech();
+setUpStreak();
 renderScenePicker();
 setLanguages(fromLanguage, toLanguage);

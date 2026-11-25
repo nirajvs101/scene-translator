@@ -683,6 +683,7 @@ async function goToNextLine() {
     autoPlayCurrentLine();
   } else {
     document.getElementById("results").scrollIntoView({ behavior: "smooth", block: "start" });
+    countTodayIfPracticed();
     celebrateResultsIfEarned();
   }
 }
@@ -783,6 +784,7 @@ async function skipToResults() {
     renderDialogue();
   });
   document.getElementById("results").scrollIntoView({ behavior: "smooth", block: "start" });
+  countTodayIfPracticed();
   celebrateResultsIfEarned();
 }
 
@@ -953,6 +955,14 @@ function renderCelebration(run, stars) {
   }
   if (!headline.hidden && run.celebrated === undefined) {
     run.celebrated = false;
+  }
+}
+
+// A finished scene counts toward the daily streak if at least one line was
+// actually checked; skipping every line doesn't count.
+function countTodayIfPracticed() {
+  if (currentRun().results.some((result) => result && result.status === "checked")) {
+    recordPractice();
   }
 }
 
