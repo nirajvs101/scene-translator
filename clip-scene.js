@@ -74,18 +74,24 @@ function clipImportRequest(linkText, startText, endText, sourceLanguage, targetL
   };
 }
 
-// Google turns free-tier requests away when it's busy, often just for a
-// moment, so a busy answer is retried after these waits.
-const CLIP_BUSY_RETRY_SECONDS = [10, 20];
+// Google turns free-tier requests away when it's busy, and its smallest model
+// gets through only some of the time, so a busy answer is retried after these
+// waits: about 3 minutes of trying in all. The Gemini chat route is offered
+// from the first busy answer, so nobody has to wait it out.
+const CLIP_BUSY_RETRY_SECONDS = [10, 20, 30, 40];
 
 function isBusyError(error) {
   return error.message.startsWith("Google's AI is too busy");
 }
 
 // Imports the clip, retrying while Google is busy. `onWait(seconds)` is
-// called before each wait so the learner knows it's still trying.
-async function importClipWithRetries(request, onWait = () => {}) {
+// called before each wait so the learner knows it's still trying, and once
+// `isCancelled()` says so it stops asking.
+async function importClipWithRetries(request, onWait = () => {}, isCancelled = () => false) {
   for (const seconds of [...CLIP_BUSY_RETRY_SECONDS, null]) {
+    if (isCancelled()) {
+      throw new Error("The import was stopped.");
+    }
     try {
       return await importClipFromServer(request);
     } catch (error) {
@@ -130,6 +136,92 @@ async function importClipFromServer(request) {
   return body;
 }
 
+// --- The Gemini chat route ----------------------------------------------
+// When the server's free tier is busy, the learner can ask Google's regular
+// Gemini chat (gemini.google.com, which runs on Google's consumer capacity)
+// and paste its reply back. The chat's times are a little rougher, so these
+// scenes get a bigger cushion around each line.
+
+const GEMINI_CHAT_URL = "https://gemini.google.com/app";
+const CHAT_CLIP_PADDING_SECONDS = 1;
+
+function clipChatPrompt({ videoId, start, end, sourceLanguage, targetLanguage, romanizedName }) {
+  const from = formatClipTime(start);
+  const to = formatClipTime(end);
+  const romanizedNote = romanizedName
+    ? `- "romanized": the same words in ${romanizedName} (${sourceLanguage} in Latin letters), as people commonly type it`
+    : `- "romanized": an empty string`;
+  return `Watch this YouTube video from ${from} to ${to} (${start} to ${end} seconds): https://www.youtube.com/watch?v=${videoId}
+
+It is a scene in ${sourceLanguage}, for a language-practice app: learners watch one short chunk of dialogue at a time and translate it into ${targetLanguage}.
+
+Listen to the audio and split ALL the dialogue between ${from} and ${to} into chunks, right up to ${to}:
+- Each chunk is ONE speaker only. When a different person starts talking, start a new chunk.
+- If one person talks for long, split their turn into chunks of at most 3 sentences.
+- Skip music, background noise, and anything nobody says.
+
+For each chunk give:
+- "speaker": a short label for who is talking, the same label every time for the same person: their name if it is said in the scene, otherwise a short description such as "Waiter" or "Man in grey shirt"
+- "start" and "end": when the chunk's speech starts and ends, in seconds from the beginning of the FULL video (so between ${start} and ${end}), to one decimal place. Be as precise as you can: these times play exactly that chunk.
+- "original": exactly what is said, in ${sourceLanguage}'s own script (words said in another language, such as English, as they are said)
+${romanizedNote}
+- "translation": a natural ${targetLanguage} translation a learner could be graded against
+- "alternatives": up to 3 other natural ${targetLanguage} translations with the same meaning, worded differently, including casual everyday wordings
+- "practice": false when there is nothing worth translating: a filler or reply of one or two words such as "okay", "yes", "no", "hmm", a name called out, or a line already spoken in ${targetLanguage}; otherwise true
+
+Reply with only this JSON in a code block:
+{"title":"Short English title","chunks":[{"speaker":"...","start":0.0,"end":0.0,"original":"...","romanized":"...","translation":"...","alternatives":["..."],"practice":true}]}`;
+}
+
+const NOT_A_CLIP_REPLY = "That doesn't look like Gemini's reply. Copy its whole answer (the part with \"chunks\") and paste it here again.";
+
+// Keeps the chunks that make sense for the chosen part, in order, the same
+// way the server cleans its own answer.
+function cleanClipChunks(chunks, start, end) {
+  const text = (value) => (typeof value === "string" ? value.trim().slice(0, AI_MAX_TEXT_LENGTH) : "");
+  return chunks
+    .map((chunk) => ({
+      speaker: text(chunk?.speaker).slice(0, 40) || "Speaker",
+      start: Number(chunk?.start),
+      end: Number(chunk?.end),
+      original: text(chunk?.original),
+      romanized: text(chunk?.romanized),
+      translation: text(chunk?.translation),
+      alternatives: (Array.isArray(chunk?.alternatives) ? chunk.alternatives : []).map(text).filter(Boolean).slice(0, 3),
+      practice: chunk?.practice !== false,
+    }))
+    .filter(
+      (chunk) =>
+        Number.isFinite(chunk.start) &&
+        Number.isFinite(chunk.end) &&
+        chunk.end > chunk.start &&
+        chunk.start >= start - 2 &&
+        chunk.end <= end + 2 &&
+        chunk.original !== "" &&
+        chunk.translation !== "",
+    )
+    .sort((first, second) => first.start - second.start);
+}
+
+// Turns a pasted Gemini reply into { title, chunks }, or throws an error to
+// show the learner. Chat replies often wrap the JSON in a sentence or a code block.
+function parseClipReply(reply, { start, end }) {
+  let parsed;
+  try {
+    parsed = JSON.parse(reply.slice(reply.indexOf("{"), reply.lastIndexOf("}") + 1));
+  } catch {
+    throw new Error(NOT_A_CLIP_REPLY);
+  }
+  if (!parsed || !Array.isArray(parsed.chunks)) {
+    throw new Error(NOT_A_CLIP_REPLY);
+  }
+  const chunks = cleanClipChunks(parsed.chunks, start, end);
+  if (chunks.length === 0) {
+    throw new Error("Gemini's reply has no lines between the times you chose. Check the times, then ask Gemini again.");
+  }
+  return { title: typeof parsed.title === "string" ? parsed.title.trim().slice(0, 80) : "", chunks };
+}
+
 // A line said in the language it's being translated into ("Two orange juices
 // also") needs no translating. Gemini is asked to mark those, and this catches
 // the ones it misses: the words said already match the translation. In a
@@ -152,7 +244,13 @@ function isWorthTranslating(chunk, targetLanguage) {
 // own: they play just before the next line, so the scene still flows. Each
 // line keeps when its own speech starts and ends, and `playFrom`, where to
 // start so those short chunks play first.
-function clipSceneFromImport({ title, chunks }, { videoId, start, end }, sourceLanguage, targetLanguage) {
+function clipSceneFromImport(
+  { title, chunks },
+  { videoId, start, end },
+  sourceLanguage,
+  targetLanguage,
+  { padding = CLIP_PADDING_SECONDS } = {},
+) {
   const { altScript } = LANGUAGES[sourceLanguage];
   const speakers = {};
   const speakerKeys = new Map();
@@ -200,7 +298,7 @@ function clipSceneFromImport({ title, chunks }, { videoId, start, end }, sourceL
     description: `A YouTube clip, ${formatClipTime(start)}–${formatClipTime(end)}.`,
     keywords: ["video", "youtube", "clip", "custom", "own"],
     speakers,
-    video: { id: videoId, start, end },
+    video: { id: videoId, start, end, padding },
     lines,
     watchOnlyCount,
   };
@@ -316,9 +414,10 @@ function isClipPlaying() {
 
 // Plays the video from `from` to `to` (seconds), calling onTurn once it
 // reaches `turnAt` (where the line to translate starts) and onDone with
-// "done" or "stopped" at the end. Uses the reading speed from Listening
-// settings. Resolves once playback has ended either way.
-async function playClipSegment({ from, to, turnAt = from, onTurn = () => {}, onDone = () => {} }) {
+// "done" or "stopped" at the end. `padding` is the extra video around it,
+// so no word is cut off. Uses the reading speed from Listening settings.
+// Resolves once playback has ended either way.
+async function playClipSegment({ from, to, turnAt = from, padding = CLIP_PADDING_SECONDS, onTurn = () => {}, onDone = () => {} }) {
   stopClipPlayback();
   const player = clipVideo.readyPromise && (await clipVideo.readyPromise);
   if (!player) {
@@ -334,8 +433,8 @@ async function playClipSegment({ from, to, turnAt = from, onTurn = () => {}, onD
       resolve(outcome);
     };
     clipVideo.playback = { stop: () => finish("stopped") };
-    const start = Math.max(0, from - CLIP_PADDING_SECONDS);
-    const stopAt = to + CLIP_PADDING_SECONDS;
+    const start = Math.max(0, from - padding);
+    const stopAt = to + padding;
     player.setPlaybackRate(speechRate);
     player.seekTo(start, true);
     player.playVideo();
@@ -345,7 +444,7 @@ async function playClipSegment({ from, to, turnAt = from, onTurn = () => {}, onD
     }
     clipVideo.pollTimer = setInterval(() => {
       const now = player.getCurrentTime();
-      if (!reachedTurn && now >= turnAt - CLIP_PADDING_SECONDS) {
+      if (!reachedTurn && now >= turnAt - padding) {
         reachedTurn = true;
         onTurn();
       }

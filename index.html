@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="style.css?v=70ae1196" />
+    <link rel="stylesheet" href="style.css?v=36bddd52" />
   </head>
   <body>
     <header class="top-bar">
@@ -134,6 +134,19 @@
             <p id="clip-languages" class="custom-hint"></p>
             <button type="button" id="clip-import" class="primary">Import clip</button>
             <p id="clip-message" class="custom-hint" role="status"></p>
+            <div id="clip-gemini" class="clip-gemini" hidden>
+              <p class="custom-step">Or do it with Gemini instead (free, about 30 seconds)</p>
+              <ol class="clip-gemini-steps">
+                <li><button type="button" id="clip-gemini-open">📋 Copy the request &amp; open Gemini</button></li>
+                <li>In Gemini, paste the request (Cmd+V or Ctrl+V) and send it. It watches the video.</li>
+                <li>
+                  <label for="clip-gemini-reply">Copy Gemini's whole reply and paste it here:</label>
+                  <textarea id="clip-gemini-reply" rows="2" placeholder="Paste Gemini's reply here. You'll get a preview before anything is added."></textarea>
+                </li>
+              </ol>
+              <textarea id="clip-gemini-prompt" rows="5" readonly aria-label="Request to copy into Gemini" hidden></textarea>
+              <p id="clip-gemini-message" class="custom-error" role="alert"></p>
+            </div>
             <div id="clip-preview" class="custom-preview" hidden>
               <p class="custom-step">3. Is this the scene you wanted?</p>
               <p id="clip-preview-title" class="custom-preview-title"></p>
@@ -259,7 +272,7 @@
     <script src="language-picker.js?v=31193603"></script>
     <script src="scene-search.js?v=3e889582"></script>
     <script src="custom-scene.js?v=88e244ae"></script>
-    <script src="clip-scene.js?v=97713f20"></script>
+    <script src="clip-scene.js?v=b75e7b26"></script>
     <script src="ai-voices.js?v=d98d6ba9"></script>
     <script src="speak.js?v=7a1449b4"></script>
     <script src="ai-grader.js?v=a09e4f4c"></script>
@@ -267,7 +280,7 @@
     <script src="word-of-the-day.js?v=8802265b"></script>
     <script src="streak.js?v=9e073081"></script>
     <script src="celebrate.js?v=2b96e805"></script>
-    <script src="practice.js?v=dfbd4326"></script>
-    <script src="app.js?v=ddb3efba"></script>
+    <script src="practice.js?v=d19bf04f"></script>
+    <script src="app.js?v=74a3c518"></script>
   </body>
 </html>

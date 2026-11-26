@@ -442,6 +442,8 @@ function playClipLine(line, { withLeadIn }) {
     from,
     to: line.end,
     turnAt: line.start,
+    // Clips imported through the Gemini chat have rougher times, so a bigger cushion.
+    padding: scene.video.padding ?? CLIP_PADDING_SECONDS,
     onTurn: () => setClipCue(`🎯 ${speakerName}: translate this line`),
     onDone: (outcome) => setClipCue(outcome === "done" ? `↻ Replay to hear ${speakerName} again.` : ""),
   });

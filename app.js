@@ -716,22 +716,46 @@ function renderClipPreview(preview) {
   document.getElementById("clip-confirm").focus();
 }
 
-// Asks the server to watch the clip. Nothing is saved until the learner
-// confirms the preview.
+// Each import attempt gets a number; switching to the Gemini route or
+// starting again makes older attempts stop and ignore their results, so two
+// previews never compete.
+let clipImportRun = 0;
+// The clip a Gemini chat request was made for, so its pasted reply is read
+// with the same link, times, and languages.
+let chatClip = null;
+
+function readClipForm() {
+  return clipImportRequest(
+    document.getElementById("clip-link").value,
+    document.getElementById("clip-start").value,
+    document.getElementById("clip-end").value,
+    fromLanguage,
+    toLanguage,
+  );
+}
+
+function setGeminiRouteShown(isShown) {
+  document.getElementById("clip-gemini").hidden = !isShown;
+  if (!isShown) {
+    document.getElementById("clip-gemini-message").textContent = "";
+    document.getElementById("clip-gemini-prompt").hidden = true;
+  }
+}
+
+// Asks the server to watch the clip, retrying for about 3 minutes while
+// Google is busy; from the first busy answer the Gemini chat route is offered
+// too. Nothing is saved until the learner confirms the preview.
 async function startClipImport() {
+  const run = ++clipImportRun;
+  const isCurrent = () => run === clipImportRun;
   const importButton = document.getElementById("clip-import");
   const message = document.getElementById("clip-message");
   document.getElementById("clip-preview").hidden = true;
+  setGeminiRouteShown(false);
   pendingClip = null;
   let request;
   try {
-    request = clipImportRequest(
-      document.getElementById("clip-link").value,
-      document.getElementById("clip-start").value,
-      document.getElementById("clip-end").value,
-      fromLanguage,
-      toLanguage,
-    );
+    request = readClipForm();
   } catch (error) {
     message.textContent = error.message;
     return;
@@ -741,19 +765,99 @@ async function startClipImport() {
   const watchingMessage = "⏳ Watching the clip and writing down who says what. This takes a minute or two…";
   message.textContent = watchingMessage;
   try {
-    const result = await importClipWithRetries(request, (seconds) => {
-      message.textContent = `⏳ Google's AI is busy, so trying again in ${seconds} seconds…`;
-      setTimeout(() => {
-        message.textContent = watchingMessage;
-      }, seconds * 1000);
-    });
+    const result = await importClipWithRetries(
+      request,
+      (seconds) => {
+        message.textContent = `⏳ Google's AI is busy, so trying again in ${seconds} seconds… Or do it with Gemini below.`;
+        setGeminiRouteShown(true);
+        setTimeout(() => {
+          if (isCurrent()) {
+            message.textContent = watchingMessage;
+          }
+        }, seconds * 1000);
+      },
+      () => !isCurrent(),
+    );
+    if (!isCurrent()) {
+      return;
+    }
     pendingClip = clipSceneFromImport(result, request, importFrom, importTo);
     message.textContent = "";
+    setGeminiRouteShown(false);
+    renderClipPreview(pendingClip);
+  } catch (error) {
+    if (!isCurrent()) {
+      return;
+    }
+    if (isBusyError(error)) {
+      message.textContent = "Google's AI is still too busy to watch the clip. Do it with Gemini below instead, or try again in a few minutes.";
+      setGeminiRouteShown(true);
+    } else {
+      message.textContent = error.message;
+    }
+  } finally {
+    if (isCurrent()) {
+      importButton.disabled = false;
+    }
+  }
+}
+
+// The Gemini chat route: copies the request and opens Gemini (the tab first,
+// because browsers only allow a new tab right after a click). Stops the
+// automatic import, which can't win once the learner has gone this way.
+async function openGeminiForClip() {
+  const message = document.getElementById("clip-gemini-message");
+  const promptBox = document.getElementById("clip-gemini-prompt");
+  promptBox.hidden = true;
+  let request;
+  try {
+    request = readClipForm();
+  } catch (error) {
+    message.textContent = error.message;
+    return;
+  }
+  clipImportRun += 1;
+  document.getElementById("clip-import").disabled = false;
+  document.getElementById("clip-message").textContent = "";
+  chatClip = { request, from: fromLanguage, to: toLanguage };
+  const prompt = clipChatPrompt(request);
+  window.open(GEMINI_CHAT_URL, "_blank", "noopener");
+  try {
+    await navigator.clipboard.writeText(prompt);
+    message.textContent = "Your request is copied. Paste it into Gemini, send it, then copy the whole reply back here.";
+  } catch {
+    promptBox.value = prompt;
+    promptBox.hidden = false;
+    message.textContent = "This browser blocked copying, so select and copy the request below, send it to Gemini, then copy the whole reply back here.";
+  }
+}
+
+// Reads a pasted Gemini reply into the same preview the automatic import uses.
+function previewGeminiReply() {
+  const replyBox = document.getElementById("clip-gemini-reply");
+  const message = document.getElementById("clip-gemini-message");
+  const reply = replyBox.value;
+  replyBox.value = "";
+  if (reply.trim() === "") {
+    return;
+  }
+  if (!chatClip) {
+    message.textContent = "First press \"Copy the request & open Gemini\", so the reply can be matched to your clip.";
+    return;
+  }
+  clipImportRun += 1;
+  document.getElementById("clip-import").disabled = false;
+  try {
+    const result = parseClipReply(reply, chatClip.request);
+    pendingClip = clipSceneFromImport(result, chatClip.request, chatClip.from, chatClip.to, {
+      padding: CHAT_CLIP_PADDING_SECONDS,
+    });
+    message.textContent = "";
+    document.getElementById("clip-message").textContent = "";
+    setGeminiRouteShown(false);
     renderClipPreview(pendingClip);
   } catch (error) {
     message.textContent = error.message;
-  } finally {
-    importButton.disabled = false;
   }
 }
 
@@ -770,6 +874,8 @@ function addPendingClip() {
   const saved = saveCustomScenes(SCENES.filter((option) => option.languages));
   document.getElementById("clip-preview").hidden = true;
   document.getElementById("clip-message").textContent = "";
+  setGeminiRouteShown(false);
+  chatClip = null;
   for (const id of ["clip-link", "clip-start", "clip-end"]) {
     document.getElementById(id).value = "";
   }
@@ -841,6 +947,9 @@ document.getElementById("clip-open").addEventListener("click", () => {
 document.getElementById("clip-import").addEventListener("click", startClipImport);
 document.getElementById("clip-confirm").addEventListener("click", addPendingClip);
 document.getElementById("clip-cancel").addEventListener("click", cancelPendingClip);
+document.getElementById("clip-gemini-open").addEventListener("click", openGeminiForClip);
+// The pasted text reaches the box just after this event.
+document.getElementById("clip-gemini-reply").addEventListener("paste", () => setTimeout(previewGeminiReply));
 document.getElementById("remove-no").addEventListener("click", keepSceneToDelete);
 document.getElementById("remove-yes").addEventListener("click", deleteChosenScene);
 document.getElementById("swap-button").addEventListener("click", () => setLanguages(toLanguage, fromLanguage));
